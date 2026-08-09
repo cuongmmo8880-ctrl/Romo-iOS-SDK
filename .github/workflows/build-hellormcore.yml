@@ -16,15 +16,15 @@ jobs:
         with:
           xcode-version: '16.2'
 
+      - name: Install CocoaPods
+        run: |
+          sudo gem install cocoapods -v 1.16.2
+
       - name: Show versions
         run: |
           xcodebuild -version
           ruby --version
           pod --version
-
-      - name: Install CocoaPods
-        run: |
-          sudo gem install cocoapods -v 1.16.2
 
       - name: Install Pods
         working-directory: RMCore/Examples/HelloRMCore
