@@ -1,4 +1,4 @@
-name: Build HelloRMCore
+﻿name: Build HelloRMCore
 
 on:
   workflow_dispatch:
@@ -17,50 +17,23 @@ jobs:
           xcode-version: '16.2'
 
       - name: Install CocoaPods
-        run: |
-          sudo gem install cocoapods -v 1.16.2
-
-      - name: Show versions
-        run: |
-          xcodebuild -version
-          ruby --version
-          pod --version
+        run: sudo gem install cocoapods -v 1.16.2
 
       - name: Install Pods
         working-directory: RMCore/Examples/HelloRMCore
-        run: |
-          pod install --repo-update
+        run: pod install --repo-update
 
       - name: Build HelloRMCore
         working-directory: RMCore/Examples/HelloRMCore
-        run: |
-          xcodebuild \
-            -workspace "HelloRMCore.xcworkspace" \
-            -scheme "HelloRMCore" \
-            -configuration Release \
-            -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
-            -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            build
+        run: xcodebuild -workspace HelloRMCore.xcworkspace -scheme HelloRMCore -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
 
       - name: Package IPA
         working-directory: RMCore/Examples/HelloRMCore
         run: |
           mkdir -p artifacts/Payload
-
           APP_PATH=$(find build -type d -name "HelloRMCore.app" | head -1)
-
-          echo "APP_PATH=$APP_PATH"
-
-          if [ -z "$APP_PATH" ]; then
-            echo "HelloRMCore.app not found"
-            exit 1
-          fi
-
+          test -n "$APP_PATH" || exit 1
           cp -R "$APP_PATH" artifacts/Payload/HelloRMCore.app
-
           cd artifacts
           zip -r HelloRMCore-unsigned.ipa Payload
 
