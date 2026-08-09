@@ -6,7 +6,7 @@
 </p>
 
 <p align="center" >
-<img src="https://img.shields.io/badge/platform-iOS%206,%207,%208,%209,%2010,%2011,%2012,%2013,%2014-blue.svg" alt="Platform: iOS 6, 7, 8, 9, 10, 11, 12, 13, 14" /></p>
+<img src="https://img.shields.io/badge/platform-iOS%206,%207,%208,%209,%2010,%2011,%2012,%2013,%2014,%2015,%2016,%2017-blue.svg" alt="Platform: iOS 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17" /></p>
 
 Romo SDK gives you the power to write your own software for Romo robots. After downloading the SDK, this guide will help you get rolling so you can start developing apps for Romo.
 
@@ -37,25 +37,27 @@ If you additionally need `RMCharacter` add
 ```ruby
 pod 'Romo/RMCharacter'
 ```
-
 Make sure to **comment out** `use_frameworks!` as you will face missing assets otherwise.
+You will also need to add
+
+```install! 'cocoapods', :disable_input_output_paths => true```
+on top of your Podfile.
 
 If you additionally need `RMVision` add
 ```ruby
 pod 'Romo/RMVision'
 ```
 
-Make sure to **comment out** `use_frameworks!` as you will face missing assets otherwise.
-
 A complete `PodFile` with all frameworks would look like this:
 
 ```ruby
 # Uncomment the next line to define a global platform for your project
 platform :ios, '6.0'
+install! 'cocoapods', :disable_input_output_paths => true
 
 target 'My Cool Romo App' do
   # Comment the next line if you don't want to use dynamic frameworks
-  use_frameworks!
+  # use_frameworks!
 
   # Pods for My Cool Romo App
   pod 'Romo'
@@ -356,7 +358,7 @@ Any Romo with either 30pin or lightning port. This includes Romo models 3A, 3B, 
 iPhone 3GS and above. iPhone SE (1st gen) & iPhone 12 mini fit like a glove. iPhone 6, 7 and 8 need some squeezing but fit just fine. iPhone X and iPhone 12 (non mini) are too big.
 
 ### Which iOS versions are compatible with the SDK?
-The latest SDK works from **iOS 6.0** up to **iOS 14**!
+The latest SDK works from **iOS 6.0** up to **iOS 17**!
 
 ### How did this come to be?
 Romotive, the company behind Romo, after shutting down were kind enough to open source their code stating:
