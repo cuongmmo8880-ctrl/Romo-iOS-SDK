@@ -4,6 +4,7 @@
 #import <arpa/inet.h>
 #import <unistd.h>
 #import <string.h>
+#import <errno.h>
 
 #import <Romo/RMCore.h>
 
@@ -54,10 +55,11 @@ static const int kRomoTCPPort = 5000;
 
 - (void)serverLoop
 {
+    NSLog(@"ROMO TCP: entering serverLoop");
     self.serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 
     if (self.serverSocket < 0) {
-        NSLog(@"ROMO TCP: socket() failed");
+        NSLog(@"ROMO TCP: socket() failed errno=%d (%s)", errno, strerror(errno));
         return;
     }
 
@@ -79,14 +81,14 @@ static const int kRomoTCPPort = 5000;
              (struct sockaddr *)&address,
              sizeof(address)) < 0) {
 
-        NSLog(@"ROMO TCP: bind() failed");
+        NSLog(@"ROMO TCP: bind() failed errno=%d (%s)", errno, strerror(errno));
         close(self.serverSocket);
         self.serverSocket = -1;
         return;
     }
 
     if (listen(self.serverSocket, 5) < 0) {
-        NSLog(@"ROMO TCP: listen() failed");
+        NSLog(@"ROMO TCP: listen() failed errno=%d (%s)", errno, strerror(errno));
         close(self.serverSocket);
         self.serverSocket = -1;
         return;
