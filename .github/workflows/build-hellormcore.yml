@@ -1,4 +1,4 @@
-﻿name: Build HelloRMCore
+name: Build HelloRMCore
 
 on:
   workflow_dispatch:
@@ -25,19 +25,61 @@ jobs:
 
       - name: Build HelloRMCore
         working-directory: RMCore/Examples/HelloRMCore
-        run: xcodebuild -workspace HelloRMCore.xcworkspace -scheme HelloRMCore -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+        run: |
+          set +e
+
+          xcodebuild \
+            -workspace HelloRMCore.xcworkspace \
+            -scheme HelloRMCore \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            IPHONEOS_DEPLOYMENT_TARGET=12.0 \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build 2>&1 | tee build.log
+
+          BUILD_STATUS=${PIPESTATUS[0]}
+
+          echo ""
+          echo "========================================"
+          echo "XCODEBUILD EXIT CODE: $BUILD_STATUS"
+          echo "========================================"
+
+          echo ""
+          echo "===== XCODE ERRORS ====="
+          grep -n -i "error:" build.log || true
+
+          echo ""
+          echo "===== BUILD FAILED ====="
+          grep -n -i "BUILD FAILED" build.log || true
+
+          echo ""
+          echo "===== LAST 100 LINES ====="
+          tail -100 build.log
+
+          exit $BUILD_STATUS
 
       - name: Package IPA
+        if: success()
         working-directory: RMCore/Examples/HelloRMCore
         run: |
           mkdir -p artifacts/Payload
+
           APP_PATH=$(find build -type d -name "HelloRMCore.app" | head -1)
+
+          echo "APP_PATH=$APP_PATH"
+
           test -n "$APP_PATH" || exit 1
+
           cp -R "$APP_PATH" artifacts/Payload/HelloRMCore.app
+
           cd artifacts
           zip -r HelloRMCore-unsigned.ipa Payload
 
       - name: Upload IPA
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: HelloRMCore-unsigned
