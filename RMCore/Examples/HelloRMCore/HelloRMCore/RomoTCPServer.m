@@ -208,8 +208,8 @@ static const int kRomoTCPPort = 5000;
         return;
     }
 
-    RMCoreRobot<HeadTiltProtocol, DriveProtocol, LEDProtocol> *romo =
-        (RMCoreRobot<HeadTiltProtocol, DriveProtocol, LEDProtocol> *)robot;
+    RMCoreRobot<HeadTiltProtocol, DriveProtocol, DifferentialDriveProtocol, LEDProtocol> *romo =
+        (RMCoreRobot<HeadTiltProtocol, DriveProtocol, DifferentialDriveProtocol, LEDProtocol> *)robot;
 
     NSLog(@"ROMO TCP COMMAND: %@", upper);
 
@@ -258,8 +258,8 @@ static const int kRomoTCPPort = 5000;
         : nil;
 
     if (robot) {
-        RMCoreRobot<HeadTiltProtocol, DriveProtocol, LEDProtocol> *romo =
-            (RMCoreRobot<HeadTiltProtocol, DriveProtocol, LEDProtocol> *)robot;
+        RMCoreRobot<HeadTiltProtocol, DriveProtocol, DifferentialDriveProtocol, LEDProtocol> *romo =
+            (RMCoreRobot<HeadTiltProtocol, DriveProtocol, DifferentialDriveProtocol, LEDProtocol> *)robot;
 
         [romo stopDriving];
 

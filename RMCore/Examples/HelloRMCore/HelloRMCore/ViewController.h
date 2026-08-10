@@ -22,7 +22,7 @@
 
 @interface ViewController : UIViewController <RMCoreDelegate>
 
-@property (nonatomic, strong) RMCoreRobot<HeadTiltProtocol, DriveProtocol, LEDProtocol> *robot;
+@property (nonatomic, strong) RMCoreRobot<HeadTiltProtocol, DriveProtocol, DifferentialDriveProtocol, LEDProtocol> *robot;
 @property (nonatomic, strong) RomoTCPServer *tcpServer;
 
 // UI
