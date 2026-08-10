@@ -31,6 +31,11 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+
+    self.view.backgroundColor = [UIColor redColor];
+
+    NSLog(@"HELLO RMCORE: ViewController viewDidLoad");
+    
     
     // Assume the Robot is not connected
     [self layoutForUnconnected];
