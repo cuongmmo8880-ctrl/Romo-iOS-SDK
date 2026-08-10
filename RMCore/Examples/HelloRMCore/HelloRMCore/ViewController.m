@@ -16,6 +16,7 @@
 //
 //==============================================================================
 #import "ViewController.h"
+#import "RomoTCPServer.h"
 
 @interface ViewController ()
 
@@ -41,7 +42,18 @@
     [self layoutForUnconnected];
 
     // To receive messages when Robots connect & disconnect, set RMCore's delegate to self
-    [RMCore setDelegate:self];
+    __weak ViewController *weakSelf = self;
+
+  self.tcpServer = [[RomoTCPServer alloc]
+    initWithRobotProvider:^RMCoreRobot *{
+      return weakSelf.robot;
+    }];
+
+  [self.tcpServer start];
+
+  NSLog(@"ROMO TCP GATEWAY: started on port 5000");
+
+  [RMCore setDelegate:self];
 }
 
 

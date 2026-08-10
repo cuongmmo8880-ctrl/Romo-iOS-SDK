@@ -18,9 +18,12 @@
 #import <UIKit/UIKit.h>
 #import <Romo/RMCore.h>
 
+@class RomoTCPServer;
+
 @interface ViewController : UIViewController <RMCoreDelegate>
 
 @property (nonatomic, strong) RMCoreRobot<HeadTiltProtocol, DriveProtocol, LEDProtocol> *robot;
+@property (nonatomic, strong) RomoTCPServer *tcpServer;
 
 // UI
 @property (nonatomic, strong) UIView *connectedView;
