@@ -1,1 +1,64 @@
+name: Build HelloRomo
 
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Install CocoaPods
+        run: |
+          sudo gem install cocoapods
+
+      - name: Install dependencies
+        working-directory: RMCore/Examples/HelloRomo
+        run: |
+          pod install --repo-update
+
+      - name: Build HelloRomo
+        working-directory: RMCore/Examples/HelloRomo
+        run: |
+          xcodebuild \
+            -workspace HelloRomo.xcworkspace \
+            -scheme HelloRomo \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
+      - name: Package IPA
+        working-directory: RMCore/Examples/HelloRomo
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/HelloRomo.app Payload/
+          zip -r HelloRomo.ipa Payload
+
+      - name: Verify IPA
+        working-directory: RMCore/Examples/HelloRomo
+        run: |
+          echo "=== IPA ==="
+          ls -lh HelloRomo.ipa
+          echo "=== APP ==="
+          ls -lh Payload/HelloRomo.app
+          echo "=== Frameworks ==="
+          find Payload/HelloRomo.app/Frameworks -maxdepth 2 -type f 2>/dev/null || true
+          echo "=== Bundles ==="
+          find Payload/HelloRomo.app -name "*.bundle" -print
+
+      - name: Upload HelloRomo IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: HelloRomo-unsigned
+          path: RMCore/Examples/HelloRomo/HelloRomo.ipa
+          if-no-files-found: error
