@@ -229,11 +229,11 @@ static const int kRomoTCPPort = 5000;
 
     } else if ([upper isEqualToString:@"LEFT"]) {
 
-        [romo driveWithRadius:0.0 speed:0.3];
+        [romo driveWithRadius:0.0 speed:0.5];
 
     } else if ([upper isEqualToString:@"RIGHT"]) {
 
-        [romo driveWithRadius:0.0 speed:-0.3];
+        [romo driveWithRadius:0.0 speed:-0.5];
 
     } else if ([upper isEqualToString:@"TILT_UP"]) {
 
