@@ -1,6 +1,9 @@
 name: Build Lily Rebuild
 
 on:
+  push:
+    branches:
+      - hello-gateway
   workflow_dispatch:
 
 jobs:
