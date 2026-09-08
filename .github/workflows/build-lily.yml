@@ -1,0 +1,67 @@
+name: Build Lily Rebuild
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.2'
+
+      - name: Verify recovered Shared.framework
+        working-directory: Lily-Rebuild
+        run: |
+          set -e
+          test -f Frameworks/Shared.framework/Shared
+          file Frameworks/Shared.framework/Shared
+          SIZE=$(stat -f%z Frameworks/Shared.framework/Shared)
+          echo "Shared size: $SIZE bytes"
+          if file Frameworks/Shared.framework/Shared | grep -q 'Git LFS pointer'; then
+            echo 'ERROR: Shared.framework/Shared is still an LFS pointer.'
+            echo 'Upload/push the recovered Shared binary first.'
+            exit 1
+          fi
+
+      - name: Build Lily
+        working-directory: Lily-Rebuild
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project LilyRebuild.xcodeproj \
+            -scheme LilyRebuild \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            IPHONEOS_DEPLOYMENT_TARGET=12.0 \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build 2>&1 | tee build.log
+
+      - name: Package IPA
+        working-directory: Lily-Rebuild
+        run: |
+          set -e
+          APP_PATH=$(find build -type d -name 'LilyRebuild.app' | head -1)
+          test -n "$APP_PATH"
+          mkdir -p artifacts/Payload
+          cp -R "$APP_PATH" artifacts/Payload/LilyRebuild.app
+          cd artifacts
+          zip -qry LilyRebuild-unsigned.ipa Payload
+          ls -lh LilyRebuild-unsigned.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: LilyRebuild-unsigned
+          path: Lily-Rebuild/artifacts/LilyRebuild-unsigned.ipa

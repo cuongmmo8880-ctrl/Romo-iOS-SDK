@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_ENCRYPTION_KEY</key>
+	<string></string>
+	<key>CFBundleDisplayName</key>
+	<string>Lily</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.sensornotes.lily.rebuild</string>
+	<key>CFBundleName</key>
+	<string>Lily</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>MinimumOSVersion</key>
+	<string>12.0</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Lily needs camera access when you use camera features.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Lily uses location when a feature requires it.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Lily needs microphone access for voice interaction.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Lily needs photo library access when you choose an image.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Lily uses speech recognition for voice interaction.</string>
+	<key>OTA_URL</key>
+	<string>https://api.tenclass.net/xiaozhi/ota/</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
+	<key>WS_URL</key>
+	<string>wss://api.tenclass.net/xiaozhi/v1/</string>
+</dict>
+</plist>

@@ -1,0 +1,128 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000001 /* LilyRebuildApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* LilyRebuildApp.swift */; };
+		A10000000000000000000002 /* LilySharedBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* LilySharedBridge.m */; };
+		A10000000000000000000003 /* Shared.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* Shared.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A20000000000000000000001 /* LilyRebuildApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LilyRebuildApp.swift; sourceTree = "<group>"; };
+		A20000000000000000000002 /* LilySharedBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LilySharedBridge.m; sourceTree = "<group>"; };
+		A20000000000000000000003 /* LilySharedBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LilySharedBridge.h; sourceTree = "<group>"; };
+		A20000000000000000000005 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A20000000000000000000004 /* Shared.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Frameworks/Shared.framework; sourceTree = "<group>"; };
+		A20000000000000000000006 /* LilyRebuild.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LilyRebuild.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A30000000000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A30000000000000000000002 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A30000000000000000000003 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = ( A10000000000000000000003 /* Shared.framework in Embed Frameworks */, );
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A30000000000000000000004 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = ( A10000000000000000000001 /* LilyRebuildApp.swift in Sources */, A10000000000000000000002 /* LilySharedBridge.m in Sources */, ); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXGroup section */
+		A40000000000000000000001 = {
+			isa = PBXGroup;
+			children = ( A40000000000000000000002, A40000000000000000000003, A40000000000000000000004, );
+			sourceTree = "<group>";
+		};
+		A40000000000000000000002 /* LilyRebuild */ = {isa = PBXGroup; children = ( A20000000000000000000001, A20000000000000000000002, A20000000000000000000003, A20000000000000000000005, ); path = LilyRebuild; sourceTree = "<group>"; };
+		A40000000000000000000003 /* Products */ = {isa = PBXGroup; children = ( A20000000000000000000006, ); name = Products; sourceTree = "<group>"; };
+		A40000000000000000000004 /* Frameworks */ = {isa = PBXGroup; children = ( A20000000000000000000004, ); name = Frameworks; sourceTree = "<group>"; };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A50000000000000000000001 /* LilyRebuild */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A60000000000000000000002;
+			buildPhases = ( A30000000000000000000004, A30000000000000000000001, A30000000000000000000002, A30000000000000000000003, );
+			buildRules = ();
+			dependencies = ();
+			name = LilyRebuild;
+			productName = LilyRebuild;
+			productReference = A20000000000000000000006;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A70000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = { LastUpgradeCheck = 1500; ORGANIZATIONNAME = "Lily Rebuild"; TargetAttributes = { A50000000000000000000001 = { CreatedOnToolsVersion = 15.0; }; }; };
+			buildConfigurationList = A60000000000000000000001;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = ( en, Base, );
+			mainGroup = A40000000000000000000001;
+			productRefGroup = A40000000000000000000003;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = ( A50000000000000000000001, );
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		A80000000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {
+			ALWAYS_SEARCH_USER_PATHS = NO;
+			CLANG_ENABLE_MODULES = YES;
+			CLANG_ENABLE_OBJC_ARC = YES;
+			IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+			PRODUCT_BUNDLE_IDENTIFIER = "com.sensornotes.lily.rebuild";
+			PRODUCT_NAME = LilyRebuild;
+			SWIFT_VERSION = 5.0;
+			TARGETED_DEVICE_FAMILY = "1,2";
+			INFOPLIST_FILE = LilyRebuild/Info.plist;
+			LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+			FRAMEWORK_SEARCH_PATHS = "$(inherited) $(PROJECT_DIR)/Frameworks";
+			CODE_SIGN_STYLE = Automatic;
+			};
+		};
+		A80000000000000000000002 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {
+			ALWAYS_SEARCH_USER_PATHS = NO;
+			CLANG_ENABLE_MODULES = YES;
+			CLANG_ENABLE_OBJC_ARC = YES;
+			IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+			PRODUCT_BUNDLE_IDENTIFIER = "com.sensornotes.lily.rebuild";
+			PRODUCT_NAME = LilyRebuild;
+			SWIFT_VERSION = 5.0;
+			TARGETED_DEVICE_FAMILY = "1,2";
+			INFOPLIST_FILE = LilyRebuild/Info.plist;
+			LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+			FRAMEWORK_SEARCH_PATHS = "$(inherited) $(PROJECT_DIR)/Frameworks";
+			CODE_SIGN_STYLE = Automatic;
+			};
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A60000000000000000000001 /* Project configs */ = {isa = XCConfigurationList; buildConfigurations = ( A80000000000000000000001, A80000000000000000000002, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A60000000000000000000002 /* Target configs */ = {isa = XCConfigurationList; buildConfigurations = ( A80000000000000000000001, A80000000000000000000002, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = A70000000000000000000001 /* Project object */;
+}
