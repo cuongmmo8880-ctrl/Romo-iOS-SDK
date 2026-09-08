@@ -87,7 +87,7 @@
 /* End PBXProject section */
 
 /* Begin XCBuildConfiguration section */
-		A80000000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {
+		A80000000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; name = Debug; buildSettings = {
 			ALWAYS_SEARCH_USER_PATHS = NO;
 			CLANG_ENABLE_MODULES = YES;
 			CLANG_ENABLE_OBJC_ARC = YES;
@@ -102,7 +102,7 @@
 			CODE_SIGN_STYLE = Automatic;
 			};
 		};
-		A80000000000000000000002 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {
+		A80000000000000000000002 /* Release */ = {isa = XCBuildConfiguration; name = Release; buildSettings = {
 			ALWAYS_SEARCH_USER_PATHS = NO;
 			CLANG_ENABLE_MODULES = YES;
 			CLANG_ENABLE_OBJC_ARC = YES;
