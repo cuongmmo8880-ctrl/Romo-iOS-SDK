@@ -9,6 +9,7 @@
 		A10000000000000000000001 /* LilyRebuildApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* LilyRebuildApp.swift */; };
 		A10000000000000000000002 /* LilySharedBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* LilySharedBridge.m */; };
 		A10000000000000000000003 /* Shared.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* Shared.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+                A10000000000000000000004 /* Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* Shared.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -21,7 +22,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		A30000000000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A30000000000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = ( A10000000000000000000004 /* Shared.framework in Frameworks */, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXResourcesBuildPhase section */
