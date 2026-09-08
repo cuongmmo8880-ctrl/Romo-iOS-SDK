@@ -1,4 +1,4 @@
-#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -6,6 +6,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)initializeSharedWithAPIKey:(NSString *)apiKey
                              wsURL:(NSString *)wsURL
                             otaURL:(NSString *)otaURL;
++ (nullable UIViewController *)mainViewController;
 @end
 
 NS_ASSUME_NONNULL_END

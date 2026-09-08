@@ -26,4 +26,25 @@
     return YES;
 }
 
++ (UIViewController *)mainViewController
+{
+    Class cls = NSClassFromString(@"SharedAppKt");
+    if (!cls) {
+        NSLog(@"[Lily] SharedAppKt not found");
+        return nil;
+    }
+
+    SEL sel = NSSelectorFromString(@"MainViewController");
+    if (![cls respondsToSelector:sel]) {
+        NSLog(@"[Lily] MainViewController selector not found");
+        return nil;
+    }
+
+    typedef UIViewController *(*MainFn)(id, SEL);
+    MainFn fn = (MainFn)objc_msgSend;
+    UIViewController *vc = fn(cls, sel);
+    NSLog(@"[Lily] MainViewController returned: %@", vc);
+    return vc;
+}
+
 @end

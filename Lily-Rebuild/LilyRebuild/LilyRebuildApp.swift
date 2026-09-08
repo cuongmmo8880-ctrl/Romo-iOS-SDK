@@ -21,9 +21,15 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
 
         UserDefaults.standard.set(ok, forKey: "LilyKoinInitOK")
 
-        let root = LilyStatusViewController(initializationSucceeded: ok)
         window = UIWindow(frame: UIScreen.main.bounds)
-        window?.rootViewController = UINavigationController(rootViewController: root)
+
+        if let root = LilySharedBridge.mainViewController() {
+            window?.rootViewController = root
+        } else {
+            let fallback = LilyStatusViewController(initializationSucceeded: ok)
+            window?.rootViewController = UINavigationController(rootViewController: fallback)
+        }
+
         window?.makeKeyAndVisible()
         return true
     }
@@ -43,7 +49,7 @@ final class LilyStatusViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = .systemBackground
         title = "Lily"
 
         let stack = UIStackView()
@@ -66,7 +72,7 @@ final class LilyStatusViewController: UIViewController {
 
         let stageLabel = UILabel()
         stageLabel.text = "Stage 1 — Shared/Koin bootstrap"
-        stageLabel.textColor = .gray
+        stageLabel.textColor = .secondaryLabel
         stageLabel.font = .preferredFont(forTextStyle: .footnote)
 
         stack.addArrangedSubview(titleLabel)
