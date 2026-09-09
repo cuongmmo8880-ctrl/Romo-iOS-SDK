@@ -104,6 +104,7 @@
 			FRAMEWORK_SEARCH_PATHS = "$(inherited) $(PROJECT_DIR)/Frameworks";
 			CODE_SIGN_STYLE = Automatic;
 			};
+                name = Debug;
 		};
 		A80000000000000000000004 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {
 			ALWAYS_SEARCH_USER_PATHS = NO;
@@ -119,6 +120,7 @@
 			FRAMEWORK_SEARCH_PATHS = "$(inherited) $(PROJECT_DIR)/Frameworks";
 			CODE_SIGN_STYLE = Automatic;
 			};
+                name = Release;
 		};
 A80000000000000000000001 /* Project Debug */ = {isa = XCBuildConfiguration; buildSettings = {
         IPHONEOS_DEPLOYMENT_TARGET = 12.0;
