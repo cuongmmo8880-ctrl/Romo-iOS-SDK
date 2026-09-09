@@ -9,48 +9,150 @@
 #import <objc/runtime.h>
 
 
+static void LilyMCPWrite(NSString *line) {
+    NSString *documents =
+        NSSearchPathForDirectoriesInDomains(
+            NSDocumentDirectory,
+            NSUserDomainMask,
+            YES
+        ).firstObject;
+
+    if (!documents) {
+        return;
+    }
+
+    NSString *path =
+        [documents stringByAppendingPathComponent:@"LilyMCPDump.txt"];
+
+    NSString *text =
+        [line stringByAppendingString:@"\n"];
+
+    NSFileHandle *fh =
+        [NSFileHandle fileHandleForWritingAtPath:path];
+
+    if (!fh) {
+        [[NSFileManager defaultManager]
+            createFileAtPath:path
+            contents:nil
+            attributes:nil];
+
+        fh =
+            [NSFileHandle fileHandleForWritingAtPath:path];
+    }
+
+    if (!fh) {
+        return;
+    }
+
+    [fh seekToEndOfFile];
+
+    NSData *data =
+        [text dataUsingEncoding:NSUTF8StringEncoding];
+
+    if (data) {
+        [fh writeData:data];
+    }
+
+    [fh closeFile];
+}
+
+
 static void LilyDumpMethods(NSString *className) {
     Class cls = NSClassFromString(className);
 
-    NSLog(@"[Lily][MCP-DUMP] CLASS %@ = %@", className, cls);
+    NSString *header =
+        [NSString stringWithFormat:@"========== MCP DUMP %@ ==========", className];
 
-    if (!cls) return;
+    NSLog(@"[Lily][MCP-DUMP] %@", header);
+    LilyMCPWrite(header);
+
+    NSString *classLine =
+        [NSString stringWithFormat:@"CLASS %@ = %@", className, cls];
+
+    NSLog(@"[Lily][MCP-DUMP] %@", classLine);
+    LilyMCPWrite(classLine);
+
+    if (!cls) {
+        NSString *line =
+            [NSString stringWithFormat:@"CLASS %@ NOT FOUND", className];
+
+        NSLog(@"[Lily][MCP-DUMP] %@", line);
+        LilyMCPWrite(line);
+        return;
+    }
+
+    // ============================================================
+    // INSTANCE METHODS
+    // ============================================================
 
     unsigned int count = 0;
     Method *methods = class_copyMethodList(cls, &count);
 
-    NSLog(@"[Lily][MCP-DUMP] instance method count = %u", count);
+    NSString *countLine =
+        [NSString stringWithFormat:@"INSTANCE METHOD COUNT = %u", count];
+
+    NSLog(@"[Lily][MCP-DUMP] %@", countLine);
+    LilyMCPWrite(countLine);
 
     for (unsigned int i = 0; i < count; i++) {
         SEL sel = method_getName(methods[i]);
         const char *types = method_getTypeEncoding(methods[i]);
 
-        NSLog(@"[Lily][MCP-DUMP] INSTANCE %@  types=%s",
-              NSStringFromSelector(sel),
-              types ? types : "");
+        NSString *selector =
+            NSStringFromSelector(sel);
+
+        NSString *line =
+            [NSString stringWithFormat:
+                @"INSTANCE %@ types=%s",
+                selector,
+                types ? types : ""];
+
+        NSLog(@"[Lily][MCP-DUMP] %@", line);
+        LilyMCPWrite(line);
     }
 
     free(methods);
+
+    // ============================================================
+    // CLASS METHODS
+    // ============================================================
 
     Class meta = object_getClass(cls);
     count = 0;
+
     methods = class_copyMethodList(meta, &count);
 
-    NSLog(@"[Lily][MCP-DUMP] class method count = %u", count);
+    NSString *classCountLine =
+        [NSString stringWithFormat:@"CLASS METHOD COUNT = %u", count];
+
+    NSLog(@"[Lily][MCP-DUMP] %@", classCountLine);
+    LilyMCPWrite(classCountLine);
 
     for (unsigned int i = 0; i < count; i++) {
         SEL sel = method_getName(methods[i]);
         const char *types = method_getTypeEncoding(methods[i]);
 
-        NSLog(@"[Lily][MCP-DUMP] CLASS %@  types=%s",
-              NSStringFromSelector(sel),
-              types ? types : "");
+        NSString *selector =
+            NSStringFromSelector(sel);
+
+        NSString *line =
+            [NSString stringWithFormat:
+                @"CLASS %@ types=%s",
+                selector,
+                types ? types : ""];
+
+        NSLog(@"[Lily][MCP-DUMP] %@", line);
+        LilyMCPWrite(line);
     }
 
     free(methods);
+
+    NSString *footer =
+        [NSString stringWithFormat:@"========== END %@ ==========", className];
+
+    NSLog(@"[Lily][MCP-DUMP] %@", footer);
+    LilyMCPWrite(footer);
 }
-
-
 
 
 static const int kLilyRomoHTTPPort = 5000;
