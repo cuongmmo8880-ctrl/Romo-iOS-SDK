@@ -95,6 +95,43 @@ jobs:
           APP_PATH=$(find build -type d -name 'LilyRebuild.app' | head -1)
           test -n "$APP_PATH"
 
+          echo "=== FINAL INFO.PLIST ==="
+          grep -A1 -B1 \
+            'CADisableMinimumFrameDurationOnPhone\|CFBundleExecutable\|CFBundlePackageType' \
+            "$APP_PATH/Info.plist"
+
+          echo "=== MAIN EXECUTABLE ==="
+          ls -lh "$APP_PATH/LilyRebuild"
+          file "$APP_PATH/LilyRebuild"          
+          
+          echo "=== VERIFY BUNDLE EXECUTABLE ==="
+          EXECUTABLE=$(/usr/libexec/PlistBuddy \
+            -c "Print :CFBundleExecutable" \
+            "$APP_PATH/Info.plist")
+
+          echo "CFBundleExecutable = $EXECUTABLE"
+
+          if [ "$EXECUTABLE" != "LilyRebuild" ]; then
+            echo "ERROR: CFBundleExecutable mismatch."
+            exit 1
+          fi
+
+          test -x "$APP_PATH/LilyRebuild"
+
+
+
+          echo "=== VERIFY COMPOSE PLIST KEY ==="
+          PLIST_VALUE=$(/usr/libexec/PlistBuddy \
+            -c "Print :CADisableMinimumFrameDurationOnPhone" \
+            "$APP_PATH/Info.plist")
+
+          echo "CADisableMinimumFrameDurationOnPhone = $PLIST_VALUE"
+
+          if [ "$PLIST_VALUE" != "true" ]; then
+            echo "ERROR: CADisableMinimumFrameDurationOnPhone is not true."
+            exit 1
+          fi
+
           mkdir -p artifacts/Payload
           cp -R "$APP_PATH" artifacts/Payload/LilyRebuild.app
 
