@@ -33,8 +33,13 @@
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Lily uses speech recognition for voice interaction.</string>
 	<key>OTA_URL</key>
-	<string>https://api.tenclass.net/xiaozhi/ota/</string>
+	<string>https://api.tenclass.net/xiaozhi/ota/</string>       
+        <key>UISupportedExternalAccessoryProtocols</key>
+        <array>
+            <string>com.romotive.romo</string>
+        </array>
 	<key>UIBackgroundModes</key>
+
 	<array>
 		<string>audio</string>
 	</array>

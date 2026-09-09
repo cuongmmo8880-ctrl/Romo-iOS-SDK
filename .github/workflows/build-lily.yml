@@ -46,6 +46,13 @@ jobs:
         with:
           xcode-version: '16.2'
 
+      - name: Install CocoaPods
+        run: sudo gem install cocoapods -v 1.16.2
+
+      - name: Install Lily Pods
+        working-directory: Lily-Rebuild
+        run: pod install --repo-update
+
       - name: Verify recovered Shared.framework
         working-directory: Lily-Rebuild
         run: |
@@ -76,7 +83,7 @@ jobs:
           set -o pipefail
 
           xcodebuild \
-            -project LilyRebuild.xcodeproj \
+            -workspace LilyRebuild.xcworkspace \
             -scheme LilyRebuild \
             -configuration Release \
             -sdk iphoneos \
