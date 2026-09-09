@@ -1,1 +1,2 @@
-Frameworks/Shared.framework/Shared filter=lfs diff=lfs merge=lfs -text
+Lily-Rebuild/Frameworks/Shared.framework/Shared filter=lfs diff=lfs merge=lfs -text
+compose-resources/** filter=lfs diff=lfs merge=lfs -text

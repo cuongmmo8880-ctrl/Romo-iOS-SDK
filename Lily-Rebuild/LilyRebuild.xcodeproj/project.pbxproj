@@ -9,7 +9,8 @@
 		A10000000000000000000001 /* LilyRebuildApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* LilyRebuildApp.swift */; };
 		A10000000000000000000002 /* LilySharedBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* LilySharedBridge.m */; };
 		A10000000000000000000003 /* Shared.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* Shared.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-                A10000000000000000000004 /* Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* Shared.framework */; };
+		A10000000000000000000004 /* Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* Shared.framework */; };
+                A10000000000000000000005 /* compose-resources in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* compose-resources */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -19,6 +20,7 @@
 		A20000000000000000000005 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A20000000000000000000004 /* Shared.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Frameworks/Shared.framework; sourceTree = "<group>"; };
 		A20000000000000000000006 /* LilyRebuild.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LilyRebuild.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A20000000000000000000007 /* compose-resources */ = {isa = PBXFileReference; lastKnownFileType = folder; path = compose-resources; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -26,7 +28,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXResourcesBuildPhase section */
-		A30000000000000000000002 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A30000000000000000000002 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ( A10000000000000000000005 /* compose-resources in Resources */, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -48,7 +50,7 @@
 /* Begin PBXGroup section */
 		A40000000000000000000001 = {
 			isa = PBXGroup;
-			children = ( A40000000000000000000002, A40000000000000000000003, A40000000000000000000004, );
+			children = ( A40000000000000000000002, A40000000000000000000003, A40000000000000000000004, A20000000000000000000007 /* compose-resources */, );
 			sourceTree = "<group>";
 		};
 		A40000000000000000000002 /* LilyRebuild */ = {isa = PBXGroup; children = ( A20000000000000000000001, A20000000000000000000002, A20000000000000000000003, A20000000000000000000005, ); path = LilyRebuild; sourceTree = "<group>"; };
@@ -88,14 +90,11 @@
 /* End PBXProject section */
 
 /* Begin XCBuildConfiguration section */
-		A80000000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; name = Debug; buildSettings = {
+		A80000000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {
 			ALWAYS_SEARCH_USER_PATHS = NO;
 			CLANG_ENABLE_MODULES = YES;
 			CLANG_ENABLE_OBJC_ARC = YES;
 			IPHONEOS_DEPLOYMENT_TARGET = 12.0;
-                        SDKROOT = iphoneos;
-                        SWIFT_OBJC_BRIDGING_HEADER = LilyRebuild/LilySharedBridge.h;
-
 			PRODUCT_BUNDLE_IDENTIFIER = "com.sensornotes.lily.rebuild";
 			PRODUCT_NAME = LilyRebuild;
 			SWIFT_VERSION = 5.0;
@@ -106,13 +105,11 @@
 			CODE_SIGN_STYLE = Automatic;
 			};
 		};
-		A80000000000000000000002 /* Release */ = {isa = XCBuildConfiguration; name = Release; buildSettings = {
+		A80000000000000000000002 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {
 			ALWAYS_SEARCH_USER_PATHS = NO;
 			CLANG_ENABLE_MODULES = YES;
 			CLANG_ENABLE_OBJC_ARC = YES;
 			IPHONEOS_DEPLOYMENT_TARGET = 12.0;
-                        SDKROOT = iphoneos;
-                        SWIFT_OBJC_BRIDGING_HEADER = LilyRebuild/LilySharedBridge.h;
 			PRODUCT_BUNDLE_IDENTIFIER = "com.sensornotes.lily.rebuild";
 			PRODUCT_NAME = LilyRebuild;
 			SWIFT_VERSION = 5.0;

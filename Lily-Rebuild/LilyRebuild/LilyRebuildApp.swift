@@ -49,7 +49,7 @@ final class LilyStatusViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
+        view.backgroundColor = .systemBackground
         title = "Lily"
 
         let stack = UIStackView()
@@ -72,7 +72,7 @@ final class LilyStatusViewController: UIViewController {
 
         let stageLabel = UILabel()
         stageLabel.text = "Stage 1 — Shared/Koin bootstrap"
-        stageLabel.textColor = .gray
+        stageLabel.textColor = .secondaryLabel
         stageLabel.font = .preferredFont(forTextStyle: .footnote)
 
         stack.addArrangedSubview(titleLabel)

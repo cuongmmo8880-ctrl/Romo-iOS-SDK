@@ -1,4 +1,4 @@
-name: Build Lily Rebuild v2
+name: Build Lily Rebuild
 
 on:
   push:
