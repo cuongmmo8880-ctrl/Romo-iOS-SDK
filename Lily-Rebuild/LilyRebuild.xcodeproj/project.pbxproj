@@ -97,6 +97,7 @@
 			IPHONEOS_DEPLOYMENT_TARGET = 12.0;
                         SDKROOT = iphoneos;
                         SUPPORTED_PLATFORMS = iphoneos;
+                        SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/LilyRebuild/LilySharedBridge.h";
 			PRODUCT_BUNDLE_IDENTIFIER = "com.sensornotes.lily.rebuild";
 			PRODUCT_NAME = LilyRebuild;
 			SWIFT_VERSION = 5.0;
@@ -115,6 +116,7 @@
 			IPHONEOS_DEPLOYMENT_TARGET = 12.0;
                         SDKROOT = iphoneos;
                         SUPPORTED_PLATFORMS = iphoneos;
+                        SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/LilyRebuild/LilySharedBridge.h";
 			PRODUCT_BUNDLE_IDENTIFIER = "com.sensornotes.lily.rebuild";
 			PRODUCT_NAME = LilyRebuild;
 			SWIFT_VERSION = 5.0;
