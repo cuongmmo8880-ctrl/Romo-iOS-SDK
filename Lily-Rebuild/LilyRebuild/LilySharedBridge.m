@@ -1,4 +1,4 @@
-#import "LilySharedBridge.h"
+﻿#import "LilySharedBridge.h"
 #import <objc/message.h>
 #import <Romo/RMCore.h>
 #import <sys/socket.h>
@@ -293,6 +293,161 @@ static const int kLilyRomoHTTPPort = 5000;
 
 @end
 
+/* ============================================================
+   Native Lily MCP -> Romo bridge
+   ============================================================ */
+
+static IMP gLilyOriginalRegisterTools = NULL;
+static BOOL gLilyMCPHookInstalled = NO;
+
+static id LilyCreateRomoTool(NSString *name,
+                             NSString *description,
+                             id (^callback)(id)) {
+    Class toolClass = NSClassFromString(@"SharedMcpTool");
+    if (!toolClass) {
+        NSLog(@"[Lily][MCP-ROMO] SharedMcpTool class not found");
+        return nil;
+    }
+
+    SEL initSel =
+        NSSelectorFromString(@"initWithName:description:properties:userOnly:callback:");
+
+    if (![toolClass instancesRespondToSelector:initSel]) {
+        NSLog(@"[Lily][MCP-ROMO] McpTool initializer not found");
+        return nil;
+    }
+
+    /*
+     Kotlin/Native ObjC metadata for McpTool constructor:
+       @49@0:8@16@24@32c40@41
+
+     That is:
+       return object
+       self/selector
+       name object
+       description object
+       properties object
+       BOOL userOnly
+       callback object
+
+     Function1<Map<String,Any?>,Any> is exposed to ObjC as a callback
+     block, so the three no-argument Romo tools can use an empty NSArray.
+    */
+    NSArray *properties = @[];
+    BOOL userOnly = NO;
+
+    typedef id (*ToolInitFn)(id, SEL, id, id, id, BOOL, id);
+    ToolInitFn initFn = (ToolInitFn)objc_msgSend;
+
+    id tool = initFn([toolClass alloc],
+                     initSel,
+                     name,
+                     description,
+                     properties,
+                     userOnly,
+                     callback);
+
+    NSLog(@"[Lily][MCP-ROMO] %@ tool=%@", tool ? @"created" : @"FAILED", name);
+    return tool;
+}
+
+static id LilyRomoForwardCallback(id arguments) {
+    (void)arguments;
+    [[LilyRomoController sharedController] forward];
+    return @"Romo moved forward";
+}
+
+static id LilyRomoBackwardCallback(id arguments) {
+    (void)arguments;
+    [[LilyRomoController sharedController] backward];
+    return @"Romo moved backward";
+}
+
+static id LilyRomoStopCallback(id arguments) {
+    (void)arguments;
+    [[LilyRomoController sharedController] stopDriving];
+    return @"Romo stopped";
+}
+
+static void LilyInjectRomoTools(id server) {
+    if (!server) return;
+
+    SEL addToolSel = NSSelectorFromString(@"addTool:");
+    if (![server respondsToSelector:addToolSel]) {
+        NSLog(@"[Lily][MCP-ROMO] live McpServer has no addTool:");
+        return;
+    }
+
+    id forwardTool = LilyCreateRomoTool(
+        @"romo_forward",
+        @"Move the connected Romo robot forward. Use this when the user asks Romo to go forward, move forward, drive forward, or tien len.",
+        ^id(id args) {
+            return LilyRomoForwardCallback(args);
+        });
+
+    id backwardTool = LilyCreateRomoTool(
+        @"romo_backward",
+        @"Move the connected Romo robot backward. Use this when the user asks Romo to go backward, move backward, reverse, or lui lai.",
+        ^id(id args) {
+            return LilyRomoBackwardCallback(args);
+        });
+
+    id stopTool = LilyCreateRomoTool(
+        @"romo_stop",
+        @"Stop the connected Romo robot immediately. Use this when the user asks Romo to stop.",
+        ^id(id args) {
+            return LilyRomoStopCallback(args);
+        });
+
+    typedef void (*AddToolFn)(id, SEL, id);
+    AddToolFn addFn = (AddToolFn)objc_msgSend;
+
+    if (forwardTool)  addFn(server, addToolSel, forwardTool);
+    if (backwardTool) addFn(server, addToolSel, backwardTool);
+    if (stopTool)     addFn(server, addToolSel, stopTool);
+
+    NSLog(@"[Lily][MCP-ROMO] native Romo tools injected into live McpServer");
+}
+
+static void LilyRegisterToolsHook(id self, SEL _cmd) {
+    if (gLilyOriginalRegisterTools) {
+        typedef void (*RegisterToolsFn)(id, SEL);
+        RegisterToolsFn original =
+            (RegisterToolsFn)gLilyOriginalRegisterTools;
+        original(self, _cmd);
+    }
+
+    /*
+     IMPORTANT:
+     self is the actual McpServer instance created by WebsocketProtocol.
+     We inject only after the original registration has completed.
+    */
+    LilyInjectRomoTools(self);
+}
+
+static void LilyInstallMCPRomoHook(void) {
+    if (gLilyMCPHookInstalled) return;
+
+    Class serverClass = NSClassFromString(@"SharedMcpServer");
+    SEL registerSel = NSSelectorFromString(@"registerTools");
+
+    if (!serverClass) {
+        NSLog(@"[Lily][MCP-ROMO] SharedMcpServer class not found");
+        return;
+    }
+
+    Method method = class_getInstanceMethod(serverClass, registerSel);
+    if (!method) {
+        NSLog(@"[Lily][MCP-ROMO] registerTools selector not found");
+        return;
+    }
+
+    gLilyOriginalRegisterTools = method_getImplementation(method);
+    method_setImplementation(method, (IMP)LilyRegisterToolsHook);
+    gLilyMCPHookInstalled = YES;
+
+    NSLog(@"[Lily][MCP-ROMO] installed registerTools hook");
+}
 @implementation LilySharedBridge
 
 + (BOOL)initializeSharedWithAPIKey:(NSString *)apiKey wsURL:(NSString *)wsURL otaURL:(NSString *)otaURL {
@@ -301,6 +456,8 @@ static const int kLilyRomoHTTPPort = 5000;
 
     SEL sel = NSSelectorFromString(@"doInitKoinApiEncryptionKey:wsUrl:otaUrl:");
     if (![cls respondsToSelector:sel]) return NO;
+
+    LilyInstallMCPRomoHook();
 
     typedef void (*InitFn)(id, SEL, NSString *, NSString *, NSString *);
     InitFn fn = (InitFn)objc_msgSend;
@@ -334,3 +491,4 @@ static const int kLilyRomoHTTPPort = 5000;
 }
 
 @end
+
