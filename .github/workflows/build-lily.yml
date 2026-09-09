@@ -20,9 +20,26 @@ jobs:
       - name: Restore Git LFS objects
         run: |
           set -e
-          git lfs install --local
-          git lfs pull
-          git lfs checkout
+
+          echo "=== Git LFS version ==="
+          git lfs version
+
+          echo "=== Git attributes ==="
+          git check-attr filter -- Lily-Rebuild/Frameworks/Shared.framework/Shared
+
+          echo "=== LFS tracked Shared ==="
+          git lfs ls-files -l | grep "Lily-Rebuild/Frameworks/Shared.framework/Shared"
+
+          echo "=== Fetch Shared ==="
+          git lfs fetch origin "$GITHUB_SHA" \
+            --include="Lily-Rebuild/Frameworks/Shared.framework/Shared"
+
+          echo "=== Checkout Shared ==="
+          git lfs checkout "Lily-Rebuild/Frameworks/Shared.framework/Shared"
+
+          echo "=== Verify Shared ==="
+          ls -lh Lily-Rebuild/Frameworks/Shared.framework/Shared
+          file Lily-Rebuild/Frameworks/Shared.framework/Shared
 
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
@@ -57,6 +74,7 @@ jobs:
         working-directory: Lily-Rebuild
         run: |
           set -o pipefail
+
           xcodebuild \
             -project LilyRebuild.xcodeproj \
             -scheme LilyRebuild \
@@ -73,10 +91,13 @@ jobs:
         working-directory: Lily-Rebuild
         run: |
           set -e
+
           APP_PATH=$(find build -type d -name 'LilyRebuild.app' | head -1)
           test -n "$APP_PATH"
+
           mkdir -p artifacts/Payload
           cp -R "$APP_PATH" artifacts/Payload/LilyRebuild.app
+
           cd artifacts
           zip -qry LilyRebuild-unsigned.ipa Payload
           ls -lh LilyRebuild-unsigned.ipa
