@@ -90,7 +90,7 @@
 /* End PBXProject section */
 
 /* Begin XCBuildConfiguration section */
-		A80000000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {
+		A80000000000000000000003 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {
 			ALWAYS_SEARCH_USER_PATHS = NO;
 			CLANG_ENABLE_MODULES = YES;
 			CLANG_ENABLE_OBJC_ARC = YES;
@@ -105,7 +105,7 @@
 			CODE_SIGN_STYLE = Automatic;
 			};
 		};
-		A80000000000000000000002 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {
+		A80000000000000000000004 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {
 			ALWAYS_SEARCH_USER_PATHS = NO;
 			CLANG_ENABLE_MODULES = YES;
 			CLANG_ENABLE_OBJC_ARC = YES;
@@ -120,11 +120,24 @@
 			CODE_SIGN_STYLE = Automatic;
 			};
 		};
+A80000000000000000000001 /* Project Debug */ = {isa = XCBuildConfiguration; buildSettings = {
+        IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+};
+name = Debug;
+};
+
+A80000000000000000000002 /* Project Release */ = {isa = XCBuildConfiguration; buildSettings = {
+        IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+};
+name = Release;
+};
+
+
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
 		A60000000000000000000001 /* Project configs */ = {isa = XCConfigurationList; buildConfigurations = ( A80000000000000000000001, A80000000000000000000002, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-		A60000000000000000000002 /* Target configs */ = {isa = XCConfigurationList; buildConfigurations = ( A80000000000000000000001, A80000000000000000000002, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A60000000000000000000002 /* Target configs */ = {isa = XCConfigurationList; buildConfigurations = (A80000000000000000000003, A80000000000000000000004, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
 	};
 	rootObject = A70000000000000000000001 /* Project object */;
