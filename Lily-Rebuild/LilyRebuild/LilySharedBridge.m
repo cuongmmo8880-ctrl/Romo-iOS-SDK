@@ -6,6 +6,52 @@
 #import <arpa/inet.h>
 #import <unistd.h>
 #import <string.h>
+#import <objc/runtime.h>
+
+
+static void LilyDumpMethods(NSString *className) {
+    Class cls = NSClassFromString(className);
+
+    NSLog(@"[Lily][MCP-DUMP] CLASS %@ = %@", className, cls);
+
+    if (!cls) return;
+
+    unsigned int count = 0;
+    Method *methods = class_copyMethodList(cls, &count);
+
+    NSLog(@"[Lily][MCP-DUMP] instance method count = %u", count);
+
+    for (unsigned int i = 0; i < count; i++) {
+        SEL sel = method_getName(methods[i]);
+        const char *types = method_getTypeEncoding(methods[i]);
+
+        NSLog(@"[Lily][MCP-DUMP] INSTANCE %@  types=%s",
+              NSStringFromSelector(sel),
+              types ? types : "");
+    }
+
+    free(methods);
+
+    Class meta = object_getClass(cls);
+    count = 0;
+    methods = class_copyMethodList(meta, &count);
+
+    NSLog(@"[Lily][MCP-DUMP] class method count = %u", count);
+
+    for (unsigned int i = 0; i < count; i++) {
+        SEL sel = method_getName(methods[i]);
+        const char *types = method_getTypeEncoding(methods[i]);
+
+        NSLog(@"[Lily][MCP-DUMP] CLASS %@  types=%s",
+              NSStringFromSelector(sel),
+              types ? types : "");
+    }
+
+    free(methods);
+}
+
+
+
 
 static const int kLilyRomoHTTPPort = 5000;
 
@@ -16,6 +62,8 @@ static const int kLilyRomoHTTPPort = 5000;
 @end
 
 @implementation LilyRomoController
+
+
 
 + (instancetype)sharedController {
     static LilyRomoController *controller;
@@ -156,7 +204,17 @@ static const int kLilyRomoHTTPPort = 5000;
     InitFn fn = (InitFn)objc_msgSend;
     fn(cls, sel, apiKey, wsURL, otaURL);
 
-    NSLog(@"[Lily] Shared Koin initialization invoked");
+    NSLog(@"[Lily] Shared Koin initialization invoked");    
+    LilyDumpMethods(@"SharedMcpServer");
+    LilyDumpMethods(@"SharedMcpServerCompanion");
+    LilyDumpMethods(@"SharedMcpTool");
+    LilyDumpMethods(@"SharedMcpToolInfo");
+    LilyDumpMethods(@"SharedMcpToolRegistry");
+    LilyDumpMethods(@"SharedSkillToolFactory");
+
+
+
+
     [[LilyRomoController sharedController] start];
     return YES;
 }
