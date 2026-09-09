@@ -57,15 +57,15 @@ static const int kLilyRomoHTTPPort = 5000;
 - (void)forward {
     RMCoreRobot<DriveProtocol> *romo = (RMCoreRobot<DriveProtocol> *)self.robot;
     if (!romo) { NSLog(@"[Lily][Romo] FORWARD ignored: no robot"); return; }
-    [romo driveWithPower:0.5];
-    NSLog(@"[Lily][Romo] FORWARD -> driveWithPower:+0.5");
+    [romo driveForwardWithSpeed:0.5];
+    NSLog(@"[Lily][Romo] FORWARD -> driveForwardWithSpeed:0.5");
 }
 
 - (void)backward {
     RMCoreRobot<DriveProtocol> *romo = (RMCoreRobot<DriveProtocol> *)self.robot;
     if (!romo) { NSLog(@"[Lily][Romo] BACKWARD ignored: no robot"); return; }
-    [romo driveWithPower:-0.5];
-    NSLog(@"[Lily][Romo] BACKWARD -> driveWithPower:-0.5");
+    [romo driveBackwardWithSpeed:0.5];
+    NSLog(@"[Lily][Romo] BACKWARD -> driveBackwardWithSpeed:0.5");
 }
 
 - (void)stopDriving {
