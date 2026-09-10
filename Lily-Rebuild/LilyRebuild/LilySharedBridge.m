@@ -1,4 +1,4 @@
-﻿#import "LilySharedBridge.h"
+#import "LilySharedBridge.h"
 #import <objc/message.h>
 #import <Romo/RMCore.h>
 #import <sys/socket.h>
@@ -415,10 +415,14 @@ static void LilyAddToolHook(id self, SEL _cmd, id tool) {
 
         if ([name isKindOfClass:[NSString class]] &&
             [(NSString *)name isEqualToString:@"self.remote.send"]) {
+            LilyMCPWrite(@"MCP-ROMO ADD: self.remote.send");
             id replacement = LilyCreateRomoReplacementTool(tool);
             if (replacement) {
                 toolToAdd = replacement;
+                LilyMCPWrite(@"MCP-ROMO REPLACE: self.remote.send SUCCESS");
                 NSLog(@"[Lily][MCP-ROMO] intercepted native tool self.remote.send");
+            } else {
+                LilyMCPWrite(@"MCP-ROMO REPLACE: self.remote.send FAILED");
             }
         }
     }
@@ -436,12 +440,14 @@ static void LilyInstallMCPRomoHook(void) {
 
     if (!serverClass) {
         NSLog(@"[Lily][MCP-ROMO] SharedMcpServer class not found");
+        LilyMCPWrite(@"MCP-ROMO INSTALL: SharedMcpServer NOT FOUND");
         return;
     }
 
     Method method = class_getInstanceMethod(serverClass, addToolSel);
     if (!method) {
         NSLog(@"[Lily][MCP-ROMO] SharedMcpServer addTool: method not found");
+        LilyMCPWrite(@"MCP-ROMO INSTALL: addToolTool: NOT FOUND");
         return;
     }
 
@@ -449,6 +455,7 @@ static void LilyInstallMCPRomoHook(void) {
     method_setImplementation(method, (IMP)LilyAddToolHook);
     gLilyMCPHookInstalled = YES;
 
+    LilyMCPWrite(@"MCP-ROMO INSTALL: HOOK INSTALLED addToolTool:");
     NSLog(@"[Lily][MCP-ROMO] installed native addTool: hook");
 }
 
