@@ -1,4 +1,4 @@
-#import "LilySharedBridge.h"
+﻿#import "LilySharedBridge.h"
 #import <objc/message.h>
 #import <Romo/RMCore.h>
 #import <sys/socket.h>
@@ -299,6 +299,9 @@ static const int kLilyRomoHTTPPort = 5000;
 
 static IMP gLilyOriginalAddTool = NULL;
 static BOOL gLilyMCPHookInstalled = NO;
+static IMP gLilyOriginalRegisterTools = NULL;
+static BOOL gLilyRegisterHookInstalled = NO;
+
 
 static id LilyRomoRemoteCallback(id arguments) {
     NSString *action = nil;
@@ -432,6 +435,17 @@ static void LilyAddToolHook(id self, SEL _cmd, id tool) {
     original(self, _cmd, toolToAdd);
 }
 
+static void LilyRegisterToolsHook(id self, SEL _cmd)
+{
+    LilyMCPWrite(@"MCP-ROMO REGISTER: ENTER");
+
+    if (gLilyOriginalRegisterTools) {
+        ((void (*)(id, SEL))gLilyOriginalRegisterTools)(self, _cmd);
+    }
+
+    LilyMCPWrite(@"MCP-ROMO REGISTER: EXIT");
+}
+
 static void LilyInstallMCPRomoHook(void) {
     if (gLilyMCPHookInstalled) return;
 
@@ -456,6 +470,26 @@ static void LilyInstallMCPRomoHook(void) {
     gLilyMCPHookInstalled = YES;
 
     LilyMCPWrite(@"MCP-ROMO INSTALL: HOOK INSTALLED addToolTool:");
+
+    SEL registerToolsSel = NSSelectorFromString(@"registerTools");
+    Method registerMethod = class_getInstanceMethod(serverClass, registerToolsSel);
+
+    if (registerMethod) {
+        gLilyOriginalRegisterTools =
+            method_getImplementation(registerMethod);
+
+        method_setImplementation(
+            registerMethod,
+            (IMP)LilyRegisterToolsHook
+        );
+
+        gLilyRegisterHookInstalled = YES;
+
+        LilyMCPWrite(@"MCP-ROMO INSTALL: HOOK INSTALLED registerTools");
+    } else {
+        LilyMCPWrite(@"MCP-ROMO INSTALL: registerTools NOT FOUND");
+    }
+
     NSLog(@"[Lily][MCP-ROMO] installed native addTool: hook");
 }
 
