@@ -432,7 +432,7 @@ static void LilyInstallMCPRomoHook(void) {
     if (gLilyMCPHookInstalled) return;
 
     Class serverClass = NSClassFromString(@"SharedMcpServer");
-    SEL addToolSel = NSSelectorFromString(@"addTool:");
+    SEL addToolSel = NSSelectorFromString(@"addToolTool:");
 
     if (!serverClass) {
         NSLog(@"[Lily][MCP-ROMO] SharedMcpServer class not found");
