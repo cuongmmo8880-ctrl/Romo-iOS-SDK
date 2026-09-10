@@ -1,4 +1,4 @@
-#import "LilySharedBridge.h"
+﻿#import "LilySharedBridge.h"
 #import <objc/message.h>
 #import <Romo/RMCore.h>
 #import <sys/socket.h>
@@ -410,19 +410,15 @@ static void LilyInjectRomoTools(id server) {
 }
 
 static void LilyRegisterToolsHook(id self, SEL _cmd) {
+
+    LilyInjectRomoTools(self);
+
     if (gLilyOriginalRegisterTools) {
         typedef void (*RegisterToolsFn)(id, SEL);
         RegisterToolsFn original =
             (RegisterToolsFn)gLilyOriginalRegisterTools;
         original(self, _cmd);
     }
-
-    /*
-     IMPORTANT:
-     self is the actual McpServer instance created by WebsocketProtocol.
-     We inject only after the original registration has completed.
-    */
-    LilyInjectRomoTools(self);
 }
 
 static void LilyInstallMCPRomoHook(void) {
