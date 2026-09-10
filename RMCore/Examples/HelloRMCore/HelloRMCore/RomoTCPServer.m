@@ -5,6 +5,7 @@
 #import <unistd.h>
 #import <string.h>
 #import <errno.h>
+#import <math.h>
 
 #import <Romo/RMCore.h>
 
@@ -245,6 +246,30 @@ static const int kRomoTCPPort = 5000;
 
         [romo tiltByAngle:-10.0 completion:^(BOOL success) {
             NSLog(@"ROMO TCP: tilt down complete");
+        }];
+
+    } else if ([upper hasPrefix:@"TURN_ANGLE:"]) {
+
+        NSString *value = [upper substringFromIndex:11];
+        NSScanner *scanner = [NSScanner scannerWithString:value];
+        float angle = 0.0f;
+
+        BOOL parsed = [scanner scanFloat:&angle] && scanner.isAtEnd;
+
+        if (!parsed || !isfinite(angle) || angle == 0.0f || angle < -180.0f || angle > 180.0f) {
+            NSLog(@"ROMO TCP: invalid TURN_ANGLE: %@", value);
+            return;
+        }
+
+        NSLog(@"ROMO TCP: native turn angle %.2f deg", angle);
+
+        [romo turnByAngle:angle
+               withRadius:RM_DRIVE_RADIUS_TURN_IN_PLACE
+                    speed:0.3f
+          finishingAction:RMCoreTurnFinishingActionStopDriving
+               completion:^(BOOL success, float heading) {
+            NSLog(@"ROMO TCP: turn %.2f -> success=%d heading=%.2f",
+                  angle, success, heading);
         }];
 
     } else {
