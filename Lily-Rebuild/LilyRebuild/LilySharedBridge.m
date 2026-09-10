@@ -297,153 +297,161 @@ static const int kLilyRomoHTTPPort = 5000;
    Native Lily MCP -> Romo bridge
    ============================================================ */
 
-static IMP gLilyOriginalRegisterTools = NULL;
+static IMP gLilyOriginalAddTool = NULL;
 static BOOL gLilyMCPHookInstalled = NO;
 
-static id LilyCreateRomoTool(NSString *name,
-                             NSString *description,
-                             id (^callback)(id)) {
+static id LilyRomoRemoteCallback(id arguments) {
+    NSString *action = nil;
+
+    if ([arguments isKindOfClass:[NSDictionary class]]) {
+        id value = [(NSDictionary *)arguments objectForKey:@"action"];
+        if ([value isKindOfClass:[NSString class]]) {
+            action = (NSString *)value;
+        }
+    }
+
+    if ([action length] > 0 &&
+        ([action caseInsensitiveCompare:@"forward"] == NSOrderedSame ||
+        [action caseInsensitiveCompare:@"go_forward"] == NSOrderedSame ||
+        [action caseInsensitiveCompare:@"move_forward"] == NSOrderedSame ||
+        [action caseInsensitiveCompare:@"tien len"] == NSOrderedSame)) {
+        [[LilyRomoController sharedController] forward];
+        return @"Romo moved forward";
+    }
+
+    if ([action length] > 0 &&
+        ([action caseInsensitiveCompare:@"backward"] == NSOrderedSame ||
+        [action caseInsensitiveCompare:@"back"] == NSOrderedSame ||
+        [action caseInsensitiveCompare:@"reverse"] == NSOrderedSame ||
+        [action caseInsensitiveCompare:@"move_backward"] == NSOrderedSame ||
+        [action caseInsensitiveCompare:@"lui lai"] == NSOrderedSame)) {
+        [[LilyRomoController sharedController] backward];
+        return @"Romo moved backward";
+    }
+
+    if ([action length] > 0 &&
+        ([action caseInsensitiveCompare:@"stop"] == NSOrderedSame ||
+        [action caseInsensitiveCompare:@"halt"] == NSOrderedSame ||
+        [action caseInsensitiveCompare:@"dung"] == NSOrderedSame)) {
+        [[LilyRomoController sharedController] stopDriving];
+        return @"Romo stopped";
+    }
+
+    return @"Romo action not recognized. Use action=forward, backward, or stop.";
+}
+
+static id LilyCreateRomoReplacementTool(id nativeTool) {
+    if (!nativeTool) return nil;
+
     Class toolClass = NSClassFromString(@"SharedMcpTool");
     if (!toolClass) {
         NSLog(@"[Lily][MCP-ROMO] SharedMcpTool class not found");
         return nil;
     }
 
-    SEL initSel =
-        NSSelectorFromString(@"initWithName:description:properties:userOnly:callback:");
+    SEL nameSel = NSSelectorFromString(@"name");
+    SEL propertiesSel = NSSelectorFromString(@"properties");
+    SEL userOnlySel = NSSelectorFromString(@"userOnly");
+    SEL initSel = NSSelectorFromString(@"initWithName:description:properties:userOnly:callback:");
 
-    if (![toolClass instancesRespondToSelector:initSel]) {
-        NSLog(@"[Lily][MCP-ROMO] McpTool initializer not found");
+    if (![nativeTool respondsToSelector:nameSel] ||
+        ![nativeTool respondsToSelector:propertiesSel] ||
+        ![nativeTool respondsToSelector:userOnlySel] ||
+        ![toolClass instancesRespondToSelector:initSel]) {
+        NSLog(@"[Lily][MCP-ROMO] native self.remote.send shape not compatible");
         return nil;
     }
 
-    /*
-     Kotlin/Native ObjC metadata for McpTool constructor:
-       @49@0:8@16@24@32c40@41
+    typedef id (*GetObjectFn)(id, SEL);
+    typedef BOOL (*GetBoolFn)(id, SEL);
+    GetObjectFn getObject = (GetObjectFn)objc_msgSend;
+    GetBoolFn getBool = (GetBoolFn)objc_msgSend;
 
-     That is:
-       return object
-       self/selector
-       name object
-       description object
-       properties object
-       BOOL userOnly
-       callback object
+    NSString *name = getObject(nativeTool, nameSel);
+    id properties = getObject(nativeTool, propertiesSel);
+    BOOL userOnly = getBool(nativeTool, userOnlySel);
 
-     Function1<Map<String,Any?>,Any> is exposed to ObjC as a callback
-     block, so the three no-argument Romo tools can use an empty NSArray.
-    */
-    NSArray *properties = @[];
-    BOOL userOnly = NO;
+    if (![name isKindOfClass:[NSString class]] ||
+        [name length] == 0 ||
+        ![name isEqualToString:@"self.remote.send"]) {
+        return nil;
+    }
+
+    if (!properties) properties = @[];
+
+    NSString *description =
+        @"Control the Romo robot. Use device_name=Romo and action=forward, backward, or stop. "
+         "When the user asks Romo to move forward, use action=forward. "
+         "When the user asks Romo to move backward or reverse, use action=backward. "
+         "When the user asks Romo to stop, use action=stop.";
 
     typedef id (*ToolInitFn)(id, SEL, id, id, id, BOOL, id);
     ToolInitFn initFn = (ToolInitFn)objc_msgSend;
 
-    id tool = initFn([toolClass alloc],
-                     initSel,
-                     name,
-                     description,
-                     properties,
-                     userOnly,
-                     callback);
+    id replacement = initFn([toolClass alloc],
+                             initSel,
+                             name,
+                             description,
+                             properties,
+                             userOnly,
+                             ^id(id args) {
+                                 return LilyRomoRemoteCallback(args);
+                             });
 
-    NSLog(@"[Lily][MCP-ROMO] %@ tool=%@", tool ? @"created" : @"FAILED", name);
-    return tool;
+    NSLog(@"[Lily][MCP-ROMO] native self.remote.send %@ with Romo callback", replacement ? @"replaced" : @"FAILED");
+    return replacement;
 }
 
-static id LilyRomoForwardCallback(id arguments) {
-    (void)arguments;
-    [[LilyRomoController sharedController] forward];
-    return @"Romo moved forward";
-}
+static void LilyAddToolHook(id self, SEL _cmd, id tool) {
+    if (!gLilyOriginalAddTool) return;
 
-static id LilyRomoBackwardCallback(id arguments) {
-    (void)arguments;
-    [[LilyRomoController sharedController] backward];
-    return @"Romo moved backward";
-}
+    id toolToAdd = tool;
 
-static id LilyRomoStopCallback(id arguments) {
-    (void)arguments;
-    [[LilyRomoController sharedController] stopDriving];
-    return @"Romo stopped";
-}
+    SEL nameSel = NSSelectorFromString(@"name");
+    if (tool && [tool respondsToSelector:nameSel]) {
+        typedef id (*GetObjectFn)(id, SEL);
+        GetObjectFn getObject = (GetObjectFn)objc_msgSend;
+        id name = getObject(tool, nameSel);
 
-static void LilyInjectRomoTools(id server) {
-    if (!server) return;
-
-    SEL addToolSel = NSSelectorFromString(@"addTool:");
-    if (![server respondsToSelector:addToolSel]) {
-        NSLog(@"[Lily][MCP-ROMO] live McpServer has no addTool:");
-        return;
+        if ([name isKindOfClass:[NSString class]] &&
+            [(NSString *)name isEqualToString:@"self.remote.send"]) {
+            id replacement = LilyCreateRomoReplacementTool(tool);
+            if (replacement) {
+                toolToAdd = replacement;
+                NSLog(@"[Lily][MCP-ROMO] intercepted native tool self.remote.send");
+            }
+        }
     }
-
-    id forwardTool = LilyCreateRomoTool(
-        @"romo_forward",
-        @"Move the connected Romo robot forward. Use this when the user asks Romo to go forward, move forward, drive forward, or tien len.",
-        ^id(id args) {
-            return LilyRomoForwardCallback(args);
-        });
-
-    id backwardTool = LilyCreateRomoTool(
-        @"romo_backward",
-        @"Move the connected Romo robot backward. Use this when the user asks Romo to go backward, move backward, reverse, or lui lai.",
-        ^id(id args) {
-            return LilyRomoBackwardCallback(args);
-        });
-
-    id stopTool = LilyCreateRomoTool(
-        @"romo_stop",
-        @"Stop the connected Romo robot immediately. Use this when the user asks Romo to stop.",
-        ^id(id args) {
-            return LilyRomoStopCallback(args);
-        });
 
     typedef void (*AddToolFn)(id, SEL, id);
-    AddToolFn addFn = (AddToolFn)objc_msgSend;
-
-    if (forwardTool)  addFn(server, addToolSel, forwardTool);
-    if (backwardTool) addFn(server, addToolSel, backwardTool);
-    if (stopTool)     addFn(server, addToolSel, stopTool);
-
-    NSLog(@"[Lily][MCP-ROMO] native Romo tools injected into live McpServer");
-}
-
-static void LilyRegisterToolsHook(id self, SEL _cmd) {
-
-    LilyInjectRomoTools(self);
-
-    if (gLilyOriginalRegisterTools) {
-        typedef void (*RegisterToolsFn)(id, SEL);
-        RegisterToolsFn original =
-            (RegisterToolsFn)gLilyOriginalRegisterTools;
-        original(self, _cmd);
-    }
+    AddToolFn original = (AddToolFn)gLilyOriginalAddTool;
+    original(self, _cmd, toolToAdd);
 }
 
 static void LilyInstallMCPRomoHook(void) {
     if (gLilyMCPHookInstalled) return;
 
     Class serverClass = NSClassFromString(@"SharedMcpServer");
-    SEL registerSel = NSSelectorFromString(@"registerTools");
+    SEL addToolSel = NSSelectorFromString(@"addTool:");
 
     if (!serverClass) {
         NSLog(@"[Lily][MCP-ROMO] SharedMcpServer class not found");
         return;
     }
 
-    Method method = class_getInstanceMethod(serverClass, registerSel);
+    Method method = class_getInstanceMethod(serverClass, addToolSel);
     if (!method) {
-        NSLog(@"[Lily][MCP-ROMO] registerTools selector not found");
+        NSLog(@"[Lily][MCP-ROMO] SharedMcpServer addTool: method not found");
         return;
     }
 
-    gLilyOriginalRegisterTools = method_getImplementation(method);
-    method_setImplementation(method, (IMP)LilyRegisterToolsHook);
+    gLilyOriginalAddTool = method_getImplementation(method);
+    method_setImplementation(method, (IMP)LilyAddToolHook);
     gLilyMCPHookInstalled = YES;
 
-    NSLog(@"[Lily][MCP-ROMO] installed registerTools hook");
+    NSLog(@"[Lily][MCP-ROMO] installed native addTool: hook");
 }
+
 @implementation LilySharedBridge
 
 + (BOOL)initializeSharedWithAPIKey:(NSString *)apiKey wsURL:(NSString *)wsURL otaURL:(NSString *)otaURL {
