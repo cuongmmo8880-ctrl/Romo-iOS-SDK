@@ -1,4 +1,4 @@
-﻿#import "LilySharedBridge.h"
+#import "LilySharedBridge.h"
 #import <objc/message.h>
 #import <Romo/RMCore.h>
 #import <sys/socket.h>
