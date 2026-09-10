@@ -2,9 +2,6 @@ name: Build HelloRomo
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - hello-gateway
 
 jobs:
   build:
