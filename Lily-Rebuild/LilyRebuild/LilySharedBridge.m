@@ -698,11 +698,12 @@ static void LilyInstallMCPRomoHook(void) {
     NSLog(@"[Lily] Shared Koin initialization invoked");
 
     /*
-     * BUILD #40 A/B TEST:
-     * Native MCP hook is already disabled.
-     * Disable MCP reflection dumps and Romo controller startup.
-     * Leave Koin initialization unchanged.
+     * BUILD #41 A/B TEST:
+     * Keep Koin initialization and native MCP hook OFF.
+     * Enable ONLY RomoController startup.
+     * MCP reflection dumps remain OFF.
      */
+    [[LilyRomoController sharedController] start];
     return YES;
 }
 
