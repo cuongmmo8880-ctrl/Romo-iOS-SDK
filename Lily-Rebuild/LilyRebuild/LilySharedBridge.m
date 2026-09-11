@@ -7,6 +7,7 @@
 #import <unistd.h>
 #import <string.h>
 #import <objc/runtime.h>
+#import <libkern/OSCacheControl.h>
 #import <mach/mach.h>
 #import <mach-o/dyld.h>
 #import <mach-o/loader.h>
@@ -471,7 +472,7 @@ static void LilyNativeRegisterToolsHook(void *server) {
     RegisterToolsFn original = (RegisterToolsFn)gLilyNativeRegisterAddress;
     original(server);
 
-    LilyInjectRobotToolsIntoServer((id)server);
+    LilyInjectRobotToolsIntoServer((__bridge id)server);
 
     uint32_t jump[2] = { 0x58000050, 0xD61F0200 };
     uint64_t hookAddress = (uint64_t)(uintptr_t)&LilyNativeRegisterToolsHook;
