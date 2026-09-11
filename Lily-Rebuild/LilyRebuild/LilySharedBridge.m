@@ -704,6 +704,13 @@ static void LilyInstallMCPRomoHook(void) {
      * MCP reflection dumps remain OFF.
      */
     [[LilyRomoController sharedController] start];
+
+    LilyDumpMethods(@"SharedMcpServer");
+    LilyDumpMethods(@"SharedMcpServerCompanion");
+    LilyDumpMethods(@"SharedMcpTool");
+    LilyDumpMethods(@"SharedMcpToolInfo");
+    LilyDumpMethods(@"SharedMcpToolRegistry");
+    LilyDumpMethods(@"SharedSkillToolFactory");
     return YES;
 }
 
