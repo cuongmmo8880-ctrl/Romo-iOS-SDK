@@ -674,10 +674,8 @@ static void LilyNativeAddToolHook(void *server, void *tool) {
 }
 
 static void LilyInstallMCPRomoHook(void) {
-    /* TEMPORARY A/B TEST: disable native addTool patch.
-       Keep all hook code intact, but do not modify Shared.framework. */
-    gLilyMCPHookInstalled = NO;
-    LilyMCPWrite(@"MCP-ROMO PATCH: DISABLED FOR BUILD #39 A/B TEST");
+    gLilyMCPHookInstalled = LilyPatchNativeAddTool();
+    LilyMCPWrite(gLilyMCPHookInstalled ? @"MCP-ROMO PATCH: ENABLED FOR BUILD #43" : @"MCP-ROMO PATCH: FAILED FOR BUILD #43");
 }
 
 @implementation LilySharedBridge
