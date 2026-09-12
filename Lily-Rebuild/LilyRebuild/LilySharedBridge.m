@@ -650,27 +650,44 @@ static BOOL LilyPatchNativeAddTool(void) {
 }
 
 static void LilyNativeAddToolHook(void *server, void *tool) {
-    /* BUILD #46 DIAGNOSTIC: test Romo-tool injection separately.
-       The original addTool call is intentionally skipped in this build.
-       Injection itself uses the relocated original via LilyAddRomoToolDirect(). */
+    /* BUILD #47: safe ordering + recursion guard.
+       Outer addTool: inject Romo tools once, then execute the original addTool.
+       Any nested addTool activity is never allowed to inject again. */
     LilyMCPWrite([NSString stringWithFormat:
-        @"MCP-ROMO #46 HOOK ENTER server=%p tool=%p -> injection only", server, tool]);
+        @"MCP-ROMO #47 HOOK ENTER server=%p tool=%p depth=%d",
+        server, tool, gLilyNativeHookDepth]);
 
     if (!server) {
-        LilyMCPWrite(@"MCP-ROMO #46 ERROR: server is NULL");
+        LilyMCPWrite(@"MCP-ROMO #47 ERROR: server is NULL");
         return;
     }
 
+    const BOOL outermost = (gLilyNativeHookDepth == 0);
     gLilyNativeHookDepth++;
-    LilyInjectRobotToolsIntoServer(server);
-    gLilyNativeHookDepth--;
 
-    LilyMCPWrite(@"MCP-ROMO #46 INJECTION RETURNED");
+    if (outermost) {
+        LilyMCPWrite(@"MCP-ROMO #47 OUTER: injecting Romo tools before original addTool");
+        LilyInjectRobotToolsIntoServer(server);
+        LilyMCPWrite(@"MCP-ROMO #47 INJECTION RETURNED");
+    } else {
+        LilyMCPWrite(@"MCP-ROMO #47 NESTED: injection skipped");
+    }
+
+    uintptr_t trampolineAddress = gLilyNativeAddToolTrampoline;
+    if (trampolineAddress) {
+        LilyMcpAddToolFn original = (LilyMcpAddToolFn)trampolineAddress;
+        original(server, tool);
+        LilyMCPWrite(@"MCP-ROMO #47 ORIGINAL ADDTOOL RETURNED");
+    } else {
+        LilyMCPWrite(@"MCP-ROMO #47 ERROR: trampoline is NULL");
+    }
+
+    gLilyNativeHookDepth--;
 }
 
 static void LilyInstallMCPRomoHook(void) {
     gLilyMCPHookInstalled = LilyPatchNativeAddTool();
-    LilyMCPWrite(gLilyMCPHookInstalled ? @"MCP-ROMO PATCH: ENABLED FOR BUILD #46 DIAGNOSTIC (INJECTION ONLY)" : @"MCP-ROMO PATCH: FAILED FOR BUILD #46");
+    LilyMCPWrite(gLilyMCPHookInstalled ? @"MCP-ROMO PATCH: ENABLED FOR BUILD #47 (SAFE ORDER + RECURSION GUARD)" : @"MCP-ROMO PATCH: FAILED FOR BUILD #47");
 }
 
 @implementation LilySharedBridge
