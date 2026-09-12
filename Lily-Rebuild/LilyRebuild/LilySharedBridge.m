@@ -650,16 +650,28 @@ static BOOL LilyPatchNativeAddTool(void) {
 }
 
 static void LilyNativeAddToolHook(void *server, void *tool) {
-    /* BUILD #44 DIAGNOSTIC: do not inject and do not call the trampoline.
-       This isolates the patch/branch/hook-entry path from all MCP/Romo work. */
+    /* BUILD #45 DIAGNOSTIC: call the relocated original only.
+       No Romo-tool injection is performed in this build. */
     LilyMCPWrite([NSString stringWithFormat:
-        @"MCP-ROMO #44 HOOK ENTER server=%p tool=%p", server, tool]);
-    return;
+        @"MCP-ROMO #45 HOOK ENTER server=%p tool=%p -> trampoline", server, tool]);
+
+    uintptr_t trampolineAddress = gLilyNativeAddToolTrampoline;
+    if (!trampolineAddress) {
+        LilyMCPWrite(@"MCP-ROMO #45 ERROR: trampoline is NULL");
+        return;
+    }
+
+    gLilyNativeHookDepth++;
+    LilyMcpAddToolFn original = (LilyMcpAddToolFn)trampolineAddress;
+    original(server, tool);
+    gLilyNativeHookDepth--;
+
+    LilyMCPWrite(@"MCP-ROMO #45 TRAMPOLINE RETURNED");
 }
 
 static void LilyInstallMCPRomoHook(void) {
     gLilyMCPHookInstalled = LilyPatchNativeAddTool();
-    LilyMCPWrite(gLilyMCPHookInstalled ? @"MCP-ROMO PATCH: ENABLED FOR BUILD #44 DIAGNOSTIC (HOOK RETURNS)" : @"MCP-ROMO PATCH: FAILED FOR BUILD #44");
+    LilyMCPWrite(gLilyMCPHookInstalled ? @"MCP-ROMO PATCH: ENABLED FOR BUILD #45 DIAGNOSTIC (TRAMPOLINE ONLY)" : @"MCP-ROMO PATCH: FAILED FOR BUILD #45");
 }
 
 @implementation LilySharedBridge
