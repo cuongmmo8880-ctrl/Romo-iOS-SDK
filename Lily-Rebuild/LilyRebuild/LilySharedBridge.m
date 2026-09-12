@@ -650,32 +650,16 @@ static BOOL LilyPatchNativeAddTool(void) {
 }
 
 static void LilyNativeAddToolHook(void *server, void *tool) {
-    uintptr_t trampoline = gLilyNativeAddToolTrampoline;
-    if (!trampoline) {
-        return;
-    }
-
-    /*
-     * The hook itself can be re-entered by unrelated code. Never inject while
-     * another injection is already in progress. Calls made by the injector use
-     * the trampoline directly and therefore bypass this hook.
-     */
-    BOOL outermost = (gLilyNativeHookDepth == 0);
-    gLilyNativeHookDepth++;
-
-    if (outermost && server && gLilyRomoInjectedServer != server) {
-        LilyInjectRobotToolsIntoServer(server);
-    }
-
-    gLilyNativeHookDepth--;
-
-    /* Execute the original function through the permanent trampoline. */
-    ((LilyMcpAddToolFn)trampoline)(server, tool);
+    /* BUILD #44 DIAGNOSTIC: do not inject and do not call the trampoline.
+       This isolates the patch/branch/hook-entry path from all MCP/Romo work. */
+    LilyMCPWrite([NSString stringWithFormat:
+        @"MCP-ROMO #44 HOOK ENTER server=%p tool=%p", server, tool]);
+    return;
 }
 
 static void LilyInstallMCPRomoHook(void) {
     gLilyMCPHookInstalled = LilyPatchNativeAddTool();
-    LilyMCPWrite(gLilyMCPHookInstalled ? @"MCP-ROMO PATCH: ENABLED FOR BUILD #43" : @"MCP-ROMO PATCH: FAILED FOR BUILD #43");
+    LilyMCPWrite(gLilyMCPHookInstalled ? @"MCP-ROMO PATCH: ENABLED FOR BUILD #44 DIAGNOSTIC (HOOK RETURNS)" : @"MCP-ROMO PATCH: FAILED FOR BUILD #44");
 }
 
 @implementation LilySharedBridge
@@ -696,10 +680,9 @@ static void LilyInstallMCPRomoHook(void) {
     NSLog(@"[Lily] Shared Koin initialization invoked");
 
     /*
-     * BUILD #41 A/B TEST:
-     * Keep Koin initialization and native MCP hook OFF.
-     * Enable ONLY RomoController startup.
-     * MCP reflection dumps remain OFF.
+     * BUILD #44 DIAGNOSTIC:
+     * Keep Koin initialization, Romo startup, and MCP reflection dumps ON.
+     * Native addTool patch is enabled, but the hook only logs and returns.
      */
     [[LilyRomoController sharedController] start];
 
