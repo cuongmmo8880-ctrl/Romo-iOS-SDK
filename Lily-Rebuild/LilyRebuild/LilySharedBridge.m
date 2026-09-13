@@ -9,7 +9,6 @@
 #import <objc/runtime.h>
 #import <libkern/OSCacheControl.h>
 #import <mach/mach.h>
-#import <mach/mach_vm.h>
 #import <mach-o/dyld.h>
 #import <mach-o/loader.h>
 #import <pthread.h>
@@ -701,7 +700,7 @@ static void LilyNativeRegisterToolsHook(void *server) {
             tool ? @"CREATED" : @"FAILED"]);
 
         if (tool) {
-            LilyMCPWrite(@"MCP-ROMO #61: CREATE SUCCEEDED; RAW MEMORY PROBE ONLY");
+            LilyMCPWrite(@"MCP-ROMO #61b: CREATE SUCCEEDED; RAW MEMORY PROBE ONLY");
 
         /*
          * BUILD #58:
@@ -724,101 +723,37 @@ static void LilyNativeRegisterToolsHook(void *server) {
             @"MCP-ROMO #61 SERVER PTR: 0x%llx",
             (unsigned long long)serverPtr]);
 
-        // Read only a small bounded region. We first check readability using
-        // mach_vm_region, then copy bytes with memcpy from the readable region.
-        // No ObjC messaging/runtime inspection is performed on these pointers.
-        mach_port_t task = mach_task_self();
+        // BUILD #61b:
+        // iOS SDK does not expose mach_vm.h to this target. Use only a bounded
+        // raw memcpy probe. No Objective-C runtime calls and no ObjC messaging.
+        // The probe is intentionally small: 64 bytes from each pointer.
+        uint8_t serverBytes[64] = {0};
+        memcpy(serverBytes, (const void *)serverPtr, sizeof(serverBytes));
 
-        mach_vm_address_t regionAddr = (mach_vm_address_t)(serverPtr & ~((uintptr_t)0xFFF));
-        mach_vm_size_t regionSize = 0;
-        vm_region_basic_info_data_64_t info;
-        mach_msg_type_number_t infoCount = VM_REGION_BASIC_INFO_COUNT_64;
-        mach_port_t objectName = MACH_PORT_NULL;
-
-        kern_return_t kr = mach_vm_region(
-            task,
-            &regionAddr,
-            &regionSize,
-            VM_REGION_BASIC_INFO_64,
-            (vm_region_info_t)&info,
-            &infoCount,
-            &objectName);
-
-        LilyMCPWrite([NSString stringWithFormat:
-            @"MCP-ROMO #61 SERVER REGION: kr=%d base=0x%llx size=0x%llx prot=0x%x",
-            kr,
-            (unsigned long long)regionAddr,
-            (unsigned long long)regionSize,
-            info.protection]);
-
-        if (kr == KERN_SUCCESS &&
-            (info.protection & VM_PROT_READ) &&
-            serverPtr >= (uintptr_t)regionAddr &&
-            serverPtr + 64 <= (uintptr_t)regionAddr + (uintptr_t)regionSize) {
-
-            uint8_t bytes[64] = {0};
-            memcpy(bytes, (const void *)serverPtr, sizeof(bytes));
-
-            NSMutableString *hex = [NSMutableString stringWithCapacity:191];
-            for (NSUInteger i = 0; i < sizeof(bytes); i++) {
-                [hex appendFormat:@"%02x%s", bytes[i], (i + 1 == sizeof(bytes)) ? "" : " "];
-            }
-
-            LilyMCPWrite([NSString stringWithFormat:
-                @"MCP-ROMO #61 SERVER BYTES[0..63]: %@",
-                hex]);
-        } else {
-            LilyMCPWrite(@"MCP-ROMO #61 SERVER BYTES: NOT READABLE/OUT OF REGION");
+        NSMutableString *serverHex = [NSMutableString stringWithCapacity:191];
+        for (NSUInteger i = 0; i < sizeof(serverBytes); i++) {
+            [serverHex appendFormat:@"%02x%s", serverBytes[i],
+             (i + 1 == sizeof(serverBytes)) ? "" : " "];
         }
 
         LilyMCPWrite([NSString stringWithFormat:
-            @"MCP-ROMO #61 TOOL PTR: 0x%llx",
-            (unsigned long long)toolPtr]);
+            @"MCP-ROMO #61b SERVER BYTES[0..63]: %@",
+            serverHex]);
 
-        mach_vm_address_t toolRegionAddr = (mach_vm_address_t)(toolPtr & ~((uintptr_t)0xFFF));
-        mach_vm_size_t toolRegionSize = 0;
-        vm_region_basic_info_data_64_t toolInfo;
-        mach_msg_type_number_t toolInfoCount = VM_REGION_BASIC_INFO_COUNT_64;
-        mach_port_t toolObjectName = MACH_PORT_NULL;
+        uint8_t toolBytes[64] = {0};
+        memcpy(toolBytes, (const void *)toolPtr, sizeof(toolBytes));
 
-        kern_return_t toolKr = mach_vm_region(
-            task,
-            &toolRegionAddr,
-            &toolRegionSize,
-            VM_REGION_BASIC_INFO_64,
-            (vm_region_info_t)&toolInfo,
-            &toolInfoCount,
-            &toolObjectName);
-
-        LilyMCPWrite([NSString stringWithFormat:
-            @"MCP-ROMO #61 TOOL REGION: kr=%d base=0x%llx size=0x%llx prot=0x%x",
-            toolKr,
-            (unsigned long long)toolRegionAddr,
-            (unsigned long long)toolRegionSize,
-            toolInfo.protection]);
-
-        if (toolKr == KERN_SUCCESS &&
-            (toolInfo.protection & VM_PROT_READ) &&
-            toolPtr >= (uintptr_t)toolRegionAddr &&
-            toolPtr + 64 <= (uintptr_t)toolRegionAddr + (uintptr_t)toolRegionSize) {
-
-            uint8_t toolBytes[64] = {0};
-            memcpy(toolBytes, (const void *)toolPtr, sizeof(toolBytes));
-
-            NSMutableString *toolHex = [NSMutableString stringWithCapacity:191];
-            for (NSUInteger i = 0; i < sizeof(toolBytes); i++) {
-                [toolHex appendFormat:@"%02x%s", toolBytes[i],
-                 (i + 1 == sizeof(toolBytes)) ? "" : " "];
-            }
-
-            LilyMCPWrite([NSString stringWithFormat:
-                @"MCP-ROMO #61 TOOL BYTES[0..63]: %@",
-                toolHex]);
-        } else {
-            LilyMCPWrite(@"MCP-ROMO #61 TOOL BYTES: NOT READABLE/OUT OF REGION");
+        NSMutableString *toolHex = [NSMutableString stringWithCapacity:191];
+        for (NSUInteger i = 0; i < sizeof(toolBytes); i++) {
+            [toolHex appendFormat:@"%02x%s", toolBytes[i],
+             (i + 1 == sizeof(toolBytes)) ? "" : " "];
         }
 
-        LilyMCPWrite(@"MCP-ROMO #61 RAW PROBE COMPLETE; NO ObjC MESSAGE SENT");
+        LilyMCPWrite([NSString stringWithFormat:
+            @"MCP-ROMO #61b TOOL BYTES[0..63]: %@",
+            toolHex]);
+
+        LilyMCPWrite(@"MCP-ROMO #61b RAW PROBE COMPLETE; NO ObjC MESSAGE SENT");
         } else {
             LilyMCPWrite(@"MCP-ROMO #58 CREATE FAILED; addTool NOT CALLED");
         }
@@ -830,7 +765,7 @@ static void LilyNativeRegisterToolsHook(void *server) {
 static void LilyInstallMCPRomoHook(void) {
     gLilyMCPHookInstalled = LilyPatchNativeRegisterTools();
     LilyMCPWrite(gLilyMCPHookInstalled
-        ? @"MCP-ROMO #61 PATCH: ENABLED — REGISTER + CREATE + RAW MEMORY PROBE ONLY:"
+        ? @"MCP-ROMO #61b PATCH: ENABLED — REGISTER + CREATE + RAW MEMORY PROBE ONLY:"
         : @"MCP-ROMO #58 PATCH: FAILED");
 }
 
