@@ -386,20 +386,56 @@ typedef void (*LilyMcpRegisterToolsFn)(void *server);
 /* BUILD #52: addTool is completely untouched at the native code level.
    Injection uses the normal ObjC-visible selector and therefore reaches the
    original SharedMcpServer implementation. */
+/* BUILD #53
+ *
+ * McpServer#addTool is Kotlin/Native, not a normal ObjC method.
+ * Confirmed native target:
+ *
+ *     Shared + 0x126CC88 = McpServer#addTool
+ *
+ * The previous BUILD #52 implementation called addTool through
+ * objc_msgSend after bridging the Kotlin/Native server pointer to id.
+ * The observed crash was:
+ *
+ *     objc_msgSend
+ *       -> LilyAddRomoToolDirect
+ *       -> EXC_BAD_ACCESS
+ *
+ * Do not send addTool through ObjC dispatch.
+ * Call the Kotlin/Native entry point directly.
+ */
+
+typedef void (*LilyMcpAddToolNativeFn)(void *server, void *tool);
+
 static void LilyAddRomoToolDirect(void *server, id tool) {
     if (!server || !tool) {
-        LilyMCPWrite(@"MCP-ROMO #50 ADDTOOL: missing server/tool");
+        LilyMCPWrite(@"MCP-ROMO #53 ADDTOOL: missing server/tool");
         return;
     }
 
-    SEL addToolSel = NSSelectorFromString(@"addToolTool:");
-    if (![(__bridge id)server respondsToSelector:addToolSel]) {
-        LilyMCPWrite(@"MCP-ROMO #50 ADDTOOL: addToolTool: selector NOT FOUND");
+    uintptr_t slide = LilyFindSharedImageSlide();
+    if (!slide) {
+        LilyMCPWrite(@"MCP-ROMO #53 ADDTOOL: Shared slide NOT FOUND");
         return;
     }
 
-    typedef void (*AddToolObjCFn)(id, SEL, id);
-    ((AddToolObjCFn)objc_msgSend)((__bridge id)server, addToolSel, tool);
+    uintptr_t addToolAddress = slide + 0x126CC88;
+
+    LilyMCPWrite([NSString stringWithFormat:
+        @"MCP-ROMO #53 ADDTOOL ENTER server=%p tool=%p native=%p",
+        server,
+        tool,
+        (void *)addToolAddress]);
+
+    LilyMcpAddToolNativeFn addTool =
+        (LilyMcpAddToolNativeFn)addToolAddress;
+
+    addTool(server, (__bridge void *)tool);
+
+    LilyMCPWrite([NSString stringWithFormat:
+        @"MCP-ROMO #53 ADDTOOL RETURN server=%p tool=%p",
+        server,
+        tool]);
 }
 
 static void LilyInjectRobotToolsIntoServer(void *server) {
