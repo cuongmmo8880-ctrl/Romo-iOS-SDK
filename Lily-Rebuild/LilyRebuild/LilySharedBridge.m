@@ -699,36 +699,82 @@ static void LilyNativeRegisterToolsHook(void *server) {
             tool,
             tool ? @"CREATED" : @"FAILED"]);
 
-        if (tool) {
-            LilyMCPWrite(@"MCP-ROMO #58: CREATE SUCCEEDED; PROBE addToolTool: ONLY");
+        LilyMCPWrite(@"MCP-ROMO #58b: CREATE SUCCEEDED; READ REGISTRY ONLY");
 
         /*
-         * BUILD #58:
-         * Do NOT call addToolTool:.
-         * First determine whether the bridged server object can safely
-         * answer respondsToSelector: for the addToolTool: selector.
+         * BUILD #58b:
+         * Do NOT call addToolTool: and do NOT call native McpServer.addTool.
+         * We only inspect the McpToolRegistry associated with this server.
          */
         id serverObj = (__bridge id)server;
-        SEL addToolSel = NSSelectorFromString(@"addToolTool:");
+
+        SEL registrySel = NSSelectorFromString(@"mcpToolRegistry");
+        SEL toolsSel = NSSelectorFromString(@"tools");
 
         LilyMCPWrite([NSString stringWithFormat:
-            @"MCP-ROMO #58 PROBE BEFORE respondsToSelector server=%p tool=%p selector=%p",
+            @"MCP-ROMO #58b REGISTRY PROBE BEFORE server=%p registrySel=%p toolsSel=%p",
             server,
-            tool,
-            addToolSel]);
+            registrySel,
+            toolsSel]);
 
-        BOOL hasAddTool = [serverObj respondsToSelector:addToolSel];
-
+        BOOL hasRegistry = [serverObj respondsToSelector:registrySel];
         LilyMCPWrite([NSString stringWithFormat:
-            @"MCP-ROMO #58 PROBE RESULT respondsToSelector=%@",
-            hasAddTool ? @"YES" : @"NO"]);
+            @"MCP-ROMO #58b server respondsTo mcpToolRegistry = %@",
+            hasRegistry ? @"YES" : @"NO"]);
 
-        /*
-         * Intentionally stop here.
-         * addToolTool: is NOT invoked in Build #58.
-         */
-        LilyMCPWrite(@"MCP-ROMO #58 PROBE COMPLETE; addToolTool: NOT CALLED");
-        } else {
+        if (hasRegistry) {
+            id registry = ((id (*)(id, SEL))objc_msgSend)(serverObj, registrySel);
+
+            LilyMCPWrite([NSString stringWithFormat:
+                @"MCP-ROMO #58b REGISTRY RESULT registry=%p",
+                registry]);
+
+            if (registry) {
+                BOOL hasTools = [registry respondsToSelector:toolsSel];
+
+                LilyMCPWrite([NSString stringWithFormat:
+                    @"MCP-ROMO #58b registry respondsTo tools = %@",
+                    hasTools ? @"YES" : @"NO"]);
+
+                if (hasTools) {
+                    id tools = ((id (*)(id, SEL))objc_msgSend)(registry, toolsSel);
+
+                    LilyMCPWrite([NSString stringWithFormat:
+                        @"MCP-ROMO #58b TOOLS RESULT tools=%p class=%@",
+                        tools,
+                        tools ? NSStringFromClass([tools class]) : @"(nil)"]);
+
+                    if ([tools respondsToSelector:@selector(count)]) {
+                        NSUInteger count = [tools count];
+                        LilyMCPWrite([NSString stringWithFormat:
+                            @"MCP-ROMO #58b TOOLS COUNT=%lu",
+                            (unsigned long)count]);
+
+                        if ([tools respondsToSelector:@selector(objectEnumerator)]) {
+                            for (id item in tools) {
+                                SEL nameSel = NSSelectorFromString(@"name");
+                                if ([item respondsToSelector:nameSel]) {
+                                    id name = ((id (*)(id, SEL))objc_msgSend)(item, nameSel);
+                                    LilyMCPWrite([NSString stringWithFormat:
+                                        @"MCP-ROMO #58b TOOL IN REGISTRY item=%p name=%@",
+                                        item,
+                                        name]);
+                                } else {
+                                    LilyMCPWrite([NSString stringWithFormat:
+                                        @"MCP-ROMO #58b REGISTRY ITEM item=%p name selector unavailable",
+                                        item]);
+                                }
+                            }
+                        }
+                    } else {
+                        LilyMCPWrite(@"MCP-ROMO #58b TOOLS has no count selector");
+                    }
+                }
+            }
+        }
+
+        LilyMCPWrite(@"MCP-ROMO #58b REGISTRY PROBE COMPLETE; NO ADDTOOL CALLED");
+ else {
             LilyMCPWrite(@"MCP-ROMO #58 CREATE FAILED; addTool NOT CALLED");
         }
     } else {
@@ -739,8 +785,8 @@ static void LilyNativeRegisterToolsHook(void *server) {
 static void LilyInstallMCPRomoHook(void) {
     gLilyMCPHookInstalled = LilyPatchNativeRegisterTools();
     LilyMCPWrite(gLilyMCPHookInstalled
-        ? @"MCP-ROMO #58 PATCH: ENABLED — REGISTER + CREATE + respondsToSelector PROBE ONLY:"
-        : @"MCP-ROMO #58 PATCH: FAILED");
+        ? @"MCP-ROMO #58b PATCH: ENABLED — REGISTER + CREATE + READ REGISTRY ONLY:"
+        : @"MCP-ROMO #58b PATCH: FAILED");
 }
 
 @implementation LilySharedBridge
