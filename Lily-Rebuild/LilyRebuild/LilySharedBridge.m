@@ -699,82 +699,49 @@ static void LilyNativeRegisterToolsHook(void *server) {
             tool,
             tool ? @"CREATED" : @"FAILED"]);
 
-        LilyMCPWrite(@"MCP-ROMO #58b: CREATE SUCCEEDED; READ REGISTRY ONLY");
-
-        /*
-         * BUILD #58b:
-         * Do NOT call addToolTool: and do NOT call native McpServer.addTool.
-         * We only inspect the McpToolRegistry associated with this server.
-         */
-        id serverObj = (__bridge id)server;
-
-        SEL registrySel = NSSelectorFromString(@"mcpToolRegistry");
-        SEL toolsSel = NSSelectorFromString(@"tools");
-
-        LilyMCPWrite([NSString stringWithFormat:
-            @"MCP-ROMO #58b REGISTRY PROBE BEFORE server=%p registrySel=%p toolsSel=%p",
-            server,
-            registrySel,
-            toolsSel]);
-
-        BOOL hasRegistry = [serverObj respondsToSelector:registrySel];
-        LilyMCPWrite([NSString stringWithFormat:
-            @"MCP-ROMO #58b server respondsTo mcpToolRegistry = %@",
-            hasRegistry ? @"YES" : @"NO"]);
-
-        if (hasRegistry) {
-            id registry = ((id (*)(id, SEL))objc_msgSend)(serverObj, registrySel);
-
+        if (tool) {
+            /*
+             * BUILD #59:
+             * Pointer/runtime probe only.
+             * Do NOT bridge `server` to an ObjC id.
+             * Do NOT call respondsToSelector:, objc_msgSend, or addToolTool:.
+             *
+             * We only inspect the raw pointer as an Objective-C runtime
+             * object reference. The purpose is to distinguish a bad/raw
+             * Kotlin/Native pointer from an ObjC-dispatch problem.
+             */
             LilyMCPWrite([NSString stringWithFormat:
-                @"MCP-ROMO #58b REGISTRY RESULT registry=%p",
-                registry]);
+                @"MCP-ROMO #59 POINTER PROBE START: server=%p tool=%p",
+                server,
+                tool]);
 
-            if (registry) {
-                BOOL hasTools = [registry respondsToSelector:toolsSel];
+            uintptr_t serverPtr = (uintptr_t)server;
+            LilyMCPWrite([NSString stringWithFormat:
+                @"MCP-ROMO #59 POINTER VALUE: 0x%llx",
+                (unsigned long long)serverPtr]);
+
+            if (serverPtr != 0) {
+                Class serverClass = object_getClass((__bridge id)(void *)serverPtr);
 
                 LilyMCPWrite([NSString stringWithFormat:
-                    @"MCP-ROMO #58b registry respondsTo tools = %@",
-                    hasTools ? @"YES" : @"NO"]);
+                    @"MCP-ROMO #59 OBJECT_GET_CLASS: class=%p",
+                    serverClass]);
 
-                if (hasTools) {
-                    id tools = ((id (*)(id, SEL))objc_msgSend)(registry, toolsSel);
-
+                if (serverClass) {
+                    const char *className = class_getName(serverClass);
                     LilyMCPWrite([NSString stringWithFormat:
-                        @"MCP-ROMO #58b TOOLS RESULT tools=%p class=%@",
-                        tools,
-                        tools ? NSStringFromClass([tools class]) : @"(nil)"]);
-
-                    if ([tools respondsToSelector:@selector(count)]) {
-                        NSUInteger count = [tools count];
-                        LilyMCPWrite([NSString stringWithFormat:
-                            @"MCP-ROMO #58b TOOLS COUNT=%lu",
-                            (unsigned long)count]);
-
-                        if ([tools respondsToSelector:@selector(objectEnumerator)]) {
-                            for (id item in tools) {
-                                SEL nameSel = NSSelectorFromString(@"name");
-                                if ([item respondsToSelector:nameSel]) {
-                                    id name = ((id (*)(id, SEL))objc_msgSend)(item, nameSel);
-                                    LilyMCPWrite([NSString stringWithFormat:
-                                        @"MCP-ROMO #58b TOOL IN REGISTRY item=%p name=%@",
-                                        item,
-                                        name]);
-                                } else {
-                                    LilyMCPWrite([NSString stringWithFormat:
-                                        @"MCP-ROMO #58b REGISTRY ITEM item=%p name selector unavailable",
-                                        item]);
-                                }
-                            }
-                        }
-                    } else {
-                        LilyMCPWrite(@"MCP-ROMO #58b TOOLS has no count selector");
-                    }
+                        @"MCP-ROMO #59 OBJECT_GET_CLASS NAME: %s",
+                        className ? className : "(null)"]);
+                } else {
+                    LilyMCPWrite(@"MCP-ROMO #59 OBJECT_GET_CLASS NAME: NULL");
                 }
+            } else {
+                LilyMCPWrite(@"MCP-ROMO #59 POINTER VALUE: NULL");
             }
-        }
 
-        LilyMCPWrite(@"MCP-ROMO #58b REGISTRY PROBE COMPLETE; NO ADDTOOL CALLED");
- else {
+            LilyMCPWrite(@"MCP-ROMO #59 POINTER PROBE COMPLETE; NO ObjC MESSAGE SENT");
+
+        } else {
             LilyMCPWrite(@"MCP-ROMO #58 CREATE FAILED; addTool NOT CALLED");
         }
     } else {
@@ -785,8 +752,8 @@ static void LilyNativeRegisterToolsHook(void *server) {
 static void LilyInstallMCPRomoHook(void) {
     gLilyMCPHookInstalled = LilyPatchNativeRegisterTools();
     LilyMCPWrite(gLilyMCPHookInstalled
-        ? @"MCP-ROMO #58b PATCH: ENABLED — REGISTER + CREATE + READ REGISTRY ONLY:"
-        : @"MCP-ROMO #58b PATCH: FAILED");
+        ? @"MCP-ROMO #59 PATCH: ENABLED — REGISTER + CREATE + POINTER PROBE ONLY:"
+        : @"MCP-ROMO #58 PATCH: FAILED");
 }
 
 @implementation LilySharedBridge
