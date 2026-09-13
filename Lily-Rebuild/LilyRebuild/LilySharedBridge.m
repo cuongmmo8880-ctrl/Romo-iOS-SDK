@@ -386,7 +386,7 @@ typedef void (*LilyMcpRegisterToolsFn)(void *server);
 /* BUILD #52: addTool is completely untouched at the native code level.
    Injection uses the normal ObjC-visible selector and therefore reaches the
    original SharedMcpServer implementation. */
-/* BUILD #54
+/* BUILD #53
  *
  * McpServer#addTool is Kotlin/Native, not a normal ObjC method.
  * Confirmed native target:
@@ -406,8 +406,6 @@ typedef void (*LilyMcpRegisterToolsFn)(void *server);
  */
 
 typedef void (*LilyMcpAddToolNativeFn)(void *server, void *tool);
-
-static uintptr_t LilyFindSharedImageSlide(void);
 
 static void LilyAddRomoToolDirect(void *server, id tool) {
     if (!server || !tool) {
@@ -665,34 +663,22 @@ static void LilyNativeRegisterToolsHook(void *server) {
     LilyMCPWrite([NSString stringWithFormat:
         @"MCP-ROMO #52 REGISTER RETURN server=%p", server]);
 
-    /* BUILD #52: defer injection until the registerTools native call stack has
-       completely unwound, but DO NOT bridge/capture the Kotlin/Native object
-       as Objective-C id. #50 proved that ARC retain of (__bridge id)server
-       crashes inside objc_msgSend(retain). Capture only the raw pointer value. */
-    if (server) {
-        uintptr_t rawServer = (uintptr_t)server;
-        LilyMCPWrite([NSString stringWithFormat:
-            @"MCP-ROMO #52 ASYNC QUEUED rawServer=%p", (void *)rawServer]);
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            void *liveServer = (void *)rawServer;
-            LilyMCPWrite([NSString stringWithFormat:
-                @"MCP-ROMO #52 ASYNC ENTER rawServer=%p", liveServer]);
-            LilyInjectRobotToolsIntoServer(liveServer);
-            LilyMCPWrite([NSString stringWithFormat:
-                @"MCP-ROMO #52 INJECT DONE rawServer=%p", liveServer]);
-        });
-    }
-
-    LilyMCPWrite(@"MCP-ROMO #52 REGISTER HOOK DONE (raw-pointer async injection queued)");
+    /*
+     * BUILD #55 TEST:
+     * HOOK ONLY. Do NOT capture the server for later use, do NOT create
+     * SharedMcpTool objects, and do NOT call McpServer.addTool.
+     *
+     * Purpose: isolate the native registerTools patch itself from the
+     * Romo MCP tool creation/addTool path.
+     */
+    LilyMCPWrite(@"MCP-ROMO #55 HOOK-ONLY: injection DISABLED; no tool creation; no addTool");
 }
 
 static void LilyInstallMCPRomoHook(void) {
-    // BUILD #54 TEST:
-    // Completely disable Romo MCP native hook/injection.
-    // registerTools and addTool are left untouched.
-    gLilyMCPHookInstalled = NO;
-    LilyMCPWrite(@"[MCP #54] native registerTools hook DISABLED; no Romo MCP injection");
+    gLilyMCPHookInstalled = LilyPatchNativeRegisterTools();
+    LilyMCPWrite(gLilyMCPHookInstalled
+        ? @"MCP-ROMO #55 PATCH: ENABLED — HOOK ONLY, NO INJECTION"
+        : @"MCP-ROMO #55 PATCH: FAILED");
 }
 
 @implementation LilySharedBridge
