@@ -700,49 +700,43 @@ static void LilyNativeRegisterToolsHook(void *server) {
             tool ? @"CREATED" : @"FAILED"]);
 
         if (tool) {
-            /*
-             * BUILD #59:
-             * Pointer/runtime probe only.
-             * Do NOT bridge `server` to an ObjC id.
-             * Do NOT call respondsToSelector:, objc_msgSend, or addToolTool:.
-             *
-             * We only inspect the raw pointer as an Objective-C runtime
-             * object reference. The purpose is to distinguish a bad/raw
-             * Kotlin/Native pointer from an ObjC-dispatch problem.
-             */
-            LilyMCPWrite([NSString stringWithFormat:
-                @"MCP-ROMO #59 POINTER PROBE START: server=%p tool=%p",
-                server,
-                tool]);
+            LilyMCPWrite(@"MCP-ROMO #60: CREATE SUCCEEDED; RAW CLASS METADATA PROBE ONLY");
 
+            // BUILD #60: no respondsToSelector:, no objc_msgSend, no addToolTool:.
             uintptr_t serverPtr = (uintptr_t)server;
             LilyMCPWrite([NSString stringWithFormat:
-                @"MCP-ROMO #59 POINTER VALUE: 0x%llx",
-                (unsigned long long)serverPtr]);
+                @"MCP-ROMO #60 STEP1 server pointer=%p", server]);
 
-            if (serverPtr != 0) {
-                Class serverClass = object_getClass((__bridge id)(void *)serverPtr);
+            Class serverClass = object_getClass((__bridge id)(void *)serverPtr);
+            LilyMCPWrite([NSString stringWithFormat:
+                @"MCP-ROMO #60 STEP2 object_getClass=%p", serverClass]);
 
-                LilyMCPWrite([NSString stringWithFormat:
-                    @"MCP-ROMO #59 OBJECT_GET_CLASS: class=%p",
-                    serverClass]);
-
-                if (serverClass) {
-                    const char *className = class_getName(serverClass);
-                    LilyMCPWrite([NSString stringWithFormat:
-                        @"MCP-ROMO #59 OBJECT_GET_CLASS NAME: %s",
-                        className ? className : "(null)"]);
-                } else {
-                    LilyMCPWrite(@"MCP-ROMO #59 OBJECT_GET_CLASS NAME: NULL");
-                }
+            if (!serverClass) {
+                LilyMCPWrite(@"MCP-ROMO #60 STEP3 class=NULL; STOP");
             } else {
-                LilyMCPWrite(@"MCP-ROMO #59 POINTER VALUE: NULL");
+                LilyMCPWrite(@"MCP-ROMO #60 STEP3 BEFORE class_getName");
+                const char *name = class_getName(serverClass);
+                LilyMCPWrite([NSString stringWithFormat:
+                    @"MCP-ROMO #60 STEP4 class_getName=%s",
+                    name ? name : "(null)"]);
+
+                LilyMCPWrite(@"MCP-ROMO #60 STEP5 BEFORE class_getSuperclass");
+                Class superClass = class_getSuperclass(serverClass);
+                const char *superName = superClass ? class_getName(superClass) : "(null)";
+                LilyMCPWrite([NSString stringWithFormat:
+                    @"MCP-ROMO #60 STEP6 superclass=%p name=%s",
+                    superClass, superName]);
+
+                LilyMCPWrite(@"MCP-ROMO #60 STEP7 BEFORE class_getInstanceMethod");
+                Method m = class_getInstanceMethod(serverClass, NSSelectorFromString(@"addToolTool:"));
+                LilyMCPWrite([NSString stringWithFormat:
+                    @"MCP-ROMO #60 STEP8 addToolTool Method=%p",
+                    m]);
             }
 
-            LilyMCPWrite(@"MCP-ROMO #59 POINTER PROBE COMPLETE; NO ObjC MESSAGE SENT");
-
+            LilyMCPWrite(@"MCP-ROMO #60 COMPLETE; NO ObjC MESSAGE SENT; addToolTool: NOT CALLED");
         } else {
-            LilyMCPWrite(@"MCP-ROMO #58 CREATE FAILED; addTool NOT CALLED");
+            LilyMCPWrite(@"MCP-ROMO #60 CREATE FAILED; addTool NOT CALLED");
         }
     } else {
         LilyMCPWrite(@"MCP-ROMO #58 CREATE START: missing server");
@@ -752,7 +746,7 @@ static void LilyNativeRegisterToolsHook(void *server) {
 static void LilyInstallMCPRomoHook(void) {
     gLilyMCPHookInstalled = LilyPatchNativeRegisterTools();
     LilyMCPWrite(gLilyMCPHookInstalled
-        ? @"MCP-ROMO #59 PATCH: ENABLED — REGISTER + CREATE + POINTER PROBE ONLY:"
+        ? @"MCP-ROMO #60 PATCH: ENABLED — REGISTER + CREATE + RAW CLASS METADATA PROBE ONLY:"
         : @"MCP-ROMO #58 PATCH: FAILED");
 }
 
