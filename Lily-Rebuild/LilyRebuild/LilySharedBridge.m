@@ -700,7 +700,7 @@ static void LilyNativeRegisterToolsHook(void *server) {
             tool ? @"CREATED" : @"FAILED"]);
 
         if (tool) {
-            LilyMCPWrite(@"MCP-ROMO #61b: CREATE SUCCEEDED; RAW MEMORY PROBE ONLY");
+            LilyMCPWrite(@"MCP-ROMO #62: CREATE SUCCEEDED; NATIVE REGISTRY PROBE ONLY");
 
         /*
          * BUILD #58:
@@ -754,6 +754,8 @@ static void LilyNativeRegisterToolsHook(void *server) {
             toolHex]);
 
         LilyMCPWrite(@"MCP-ROMO #61b RAW PROBE COMPLETE; NO ObjC MESSAGE SENT");
+        LilyMCPProbeRegistryNative(server);
+
         } else {
             LilyMCPWrite(@"MCP-ROMO #58 CREATE FAILED; addTool NOT CALLED");
         }
@@ -762,10 +764,100 @@ static void LilyNativeRegisterToolsHook(void *server) {
     }
 }
 
+
+// BUILD #62: Native registry visibility probe.
+// No addToolTool:, no respondsToSelector:, no object_getClass(), no objc_msgSend()
+// on the McpServer pointer. We resolve the known Kotlin/Native symbols and invoke
+// the zero-argument native accessors only.
+typedef void *(*LilyNoArgNativeFn)(void *);
+
+static uintptr_t LilyFindSharedSymbolAddress(const char *symbol) {
+    if (!symbol) return 0;
+
+    const void *addr = dlsym(RTLD_DEFAULT, symbol);
+    if (addr) return (uintptr_t)addr;
+
+    uint32_t count = _dyld_image_count();
+    for (uint32_t i = 0; i < count; i++) {
+        const struct mach_header *hdr = _dyld_get_image_header(i);
+        if (!hdr) continue;
+
+        const char *imageName = _dyld_get_image_name(i);
+        if (!imageName || !strstr(imageName, "Shared.framework/Shared")) continue;
+
+        void *handle = dlopen(imageName, RTLD_LAZY | RTLD_NOLOAD);
+        if (handle) {
+            addr = dlsym(handle, symbol);
+            dlclose(handle);
+            if (addr) return (uintptr_t)addr;
+        }
+    }
+    return 0;
+}
+
+static void LilyMCPProbeRegistryNative(void *server) {
+    if (!server) {
+        LilyMCPWrite(@"MCP-ROMO #62 REGISTRY PROBE: server=NULL");
+        return;
+    }
+
+    LilyMCPWrite([NSString stringWithFormat:
+        @"MCP-ROMO #62 REGISTRY PROBE START: server=%p", server]);
+
+    // These are the actual Kotlin/Native symbol names discovered earlier.
+    const char *registrySym =
+        "kfun:com.sensornotes.lily.mcp.McpServer#mcpToolRegistry(){}";
+    const char *toolsSym =
+        "kfun:com.sensornotes.lily.mcp.McpToolRegistry#tools(){}";
+
+    uintptr_t registryAddr = LilyFindSharedSymbolAddress(registrySym);
+    uintptr_t toolsAddr = LilyFindSharedSymbolAddress(toolsSym);
+
+    LilyMCPWrite([NSString stringWithFormat:
+        @"MCP-ROMO #62 SYMBOL mcpToolRegistry=%p",
+        (void *)registryAddr]);
+
+    LilyMCPWrite([NSString stringWithFormat:
+        @"MCP-ROMO #62 SYMBOL tools=%p",
+        (void *)toolsAddr]);
+
+    if (!registryAddr) {
+        LilyMCPWrite(@"MCP-ROMO #62: mcpToolRegistry native symbol NOT FOUND");
+        LilyMCPWrite(@"MCP-ROMO #62 REGISTRY PROBE COMPLETE");
+        return;
+    }
+
+    LilyNoArgNativeFn getRegistry = (LilyNoArgNativeFn)registryAddr;
+    void *registry = getRegistry(server);
+
+    LilyMCPWrite([NSString stringWithFormat:
+        @"MCP-ROMO #62 NATIVE REGISTRY RESULT: %p", registry]);
+
+    if (!registry) {
+        LilyMCPWrite(@"MCP-ROMO #62: registry=NULL");
+        LilyMCPWrite(@"MCP-ROMO #62 REGISTRY PROBE COMPLETE");
+        return;
+    }
+
+    if (!toolsAddr) {
+        LilyMCPWrite(@"MCP-ROMO #62: tools native symbol NOT FOUND");
+        LilyMCPWrite(@"MCP-ROMO #62 REGISTRY PROBE COMPLETE");
+        return;
+    }
+
+    LilyNoArgNativeFn getTools = (LilyNoArgNativeFn)toolsAddr;
+    void *tools = getTools(registry);
+
+    LilyMCPWrite([NSString stringWithFormat:
+        @"MCP-ROMO #62 NATIVE TOOLS RESULT: %p", tools]);
+
+    LilyMCPWrite(@"MCP-ROMO #62 REGISTRY PROBE COMPLETE; NO ADDTOOL CALLED");
+}
+
 static void LilyInstallMCPRomoHook(void) {
     gLilyMCPHookInstalled = LilyPatchNativeRegisterTools();
     LilyMCPWrite(gLilyMCPHookInstalled
-        ? @"MCP-ROMO #61b PATCH: ENABLED — REGISTER + CREATE + RAW MEMORY PROBE ONLY:"
+        ? @"MCP-ROMO #62 PATCH: ENABLED — REGISTER + CREATE + NATIVE REGISTRY PROBE ONLY:"
         : @"MCP-ROMO #58 PATCH: FAILED");
 }
 
