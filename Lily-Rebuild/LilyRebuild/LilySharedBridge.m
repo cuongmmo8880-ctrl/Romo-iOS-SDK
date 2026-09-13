@@ -386,7 +386,7 @@ typedef void (*LilyMcpRegisterToolsFn)(void *server);
 /* BUILD #52: addTool is completely untouched at the native code level.
    Injection uses the normal ObjC-visible selector and therefore reaches the
    original SharedMcpServer implementation. */
-/* BUILD #53
+/* BUILD #54
  *
  * McpServer#addTool is Kotlin/Native, not a normal ObjC method.
  * Confirmed native target:
@@ -406,6 +406,8 @@ typedef void (*LilyMcpRegisterToolsFn)(void *server);
  */
 
 typedef void (*LilyMcpAddToolNativeFn)(void *server, void *tool);
+
+static uintptr_t LilyFindSharedImageSlide(void);
 
 static void LilyAddRomoToolDirect(void *server, id tool) {
     if (!server || !tool) {
@@ -686,10 +688,11 @@ static void LilyNativeRegisterToolsHook(void *server) {
 }
 
 static void LilyInstallMCPRomoHook(void) {
-    gLilyMCPHookInstalled = LilyPatchNativeRegisterTools();
-    LilyMCPWrite(gLilyMCPHookInstalled
-        ? @"MCP-ROMO PATCH: ENABLED FOR BUILD #52 (native registerTools post-return)"
-        : @"MCP-ROMO PATCH: FAILED FOR BUILD #50");
+    // BUILD #54 TEST:
+    // Completely disable Romo MCP native hook/injection.
+    // registerTools and addTool are left untouched.
+    gLilyMCPHookInstalled = NO;
+    LilyMCPWrite(@"[MCP #54] native registerTools hook DISABLED; no Romo MCP injection");
 }
 
 @implementation LilySharedBridge
