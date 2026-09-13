@@ -407,6 +407,8 @@ typedef void (*LilyMcpRegisterToolsFn)(void *server);
 
 typedef void (*LilyMcpAddToolNativeFn)(void *server, void *tool);
 
+static uintptr_t LilyFindSharedImageSlide(void);
+
 static void LilyAddRomoToolDirect(void *server, id tool) {
     if (!server || !tool) {
         LilyMCPWrite(@"MCP-ROMO #53 ADDTOOL: missing server/tool");
