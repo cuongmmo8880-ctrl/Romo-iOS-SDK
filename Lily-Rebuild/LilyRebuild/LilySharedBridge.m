@@ -728,11 +728,11 @@ static void LilyNativeRegisterToolsHook(void *server) {
          * addToolTool: is NOT invoked in Build #58.
          */
         LilyMCPWrite(@"MCP-ROMO #58 PROBE COMPLETE; addToolTool: NOT CALLED");
- else {
-            LilyMCPWrite(@"MCP-ROMO #57 CREATE FAILED; addTool NOT CALLED");
+        } else {
+            LilyMCPWrite(@"MCP-ROMO #58 CREATE FAILED; addTool NOT CALLED");
         }
     } else {
-        LilyMCPWrite(@"MCP-ROMO #57 CREATE START: missing server");
+        LilyMCPWrite(@"MCP-ROMO #58 CREATE START: missing server");
     }
 }
 
@@ -740,7 +740,7 @@ static void LilyInstallMCPRomoHook(void) {
     gLilyMCPHookInstalled = LilyPatchNativeRegisterTools();
     LilyMCPWrite(gLilyMCPHookInstalled
         ? @"MCP-ROMO #58 PATCH: ENABLED — REGISTER + CREATE + respondsToSelector PROBE ONLY:"
-        : @"MCP-ROMO #57 PATCH: FAILED");
+        : @"MCP-ROMO #58 PATCH: FAILED");
 }
 
 @implementation LilySharedBridge
