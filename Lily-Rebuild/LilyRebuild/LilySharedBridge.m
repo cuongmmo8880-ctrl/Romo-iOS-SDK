@@ -299,7 +299,7 @@ static const int kLilyRomoHTTPPort = 5000;
 @end
 
 /* ============================================================
-   Native Lily MCP -> Romo bridge — BUILD #70
+   Native Lily MCP -> Romo bridge — BUILD #71
 
    Correct lifecycle:
        WebsocketProtocol.openAudioChannel
@@ -395,25 +395,60 @@ typedef void (*LilyMcpAddToolFn)(void *server, void *tool);
    Verified symbol: Shared + 0x126CC88. */
 static void LilyAddRomoToolNative(void *server, id tool) {
     if (!server || !tool) {
-        LilyMCPWrite(@"MCP-ROMO #70 ADDTOOL: missing server/tool");
+        LilyMCPWrite(@"MCP-ROMO #71 ADDTOOL: missing server/tool");
         return;
     }
 
     uintptr_t slide = LilyFindSharedImageSlide();
     if (!slide) {
-        LilyMCPWrite(@"MCP-ROMO #70 ADDTOOL: Shared.framework slide NOT FOUND");
+        LilyMCPWrite(@"MCP-ROMO #71 ADDTOOL: Shared.framework slide NOT FOUND");
         return;
     }
 
     uintptr_t target = slide + 0x126CC88;
     LilyMCPWrite([NSString stringWithFormat:
-        @"MCP-ROMO #70 ADDTOOL NATIVE ENTER server=%p tool=%p target=0x%llx",
+        @"MCP-ROMO #71 ADDTOOL NATIVE ENTER server=%p tool=%p target=0x%llx",
         server, tool, (unsigned long long)target]);
 
+    /* Pure raw-memory probe: no ObjC messaging/getters.
+       Verified McpTool native layout:
+         +0x08 name
+         +0x10 description
+         +0x18 properties
+         +0x20 callback
+         +0x28 userOnly
+    */
+    uintptr_t t = (uintptr_t)tool;
+    uintptr_t v08 = *(uintptr_t *)(t + 0x08);
+    LilyMCPWrite([NSString stringWithFormat:
+        @"MCP-ROMO #71 TOOL +08 name=0x%llx",
+        (unsigned long long)v08]);
+
+    uintptr_t v10 = *(uintptr_t *)(t + 0x10);
+    LilyMCPWrite([NSString stringWithFormat:
+        @"MCP-ROMO #71 TOOL +10 description=0x%llx",
+        (unsigned long long)v10]);
+
+    uintptr_t v18 = *(uintptr_t *)(t + 0x18);
+    LilyMCPWrite([NSString stringWithFormat:
+        @"MCP-ROMO #71 TOOL +18 properties=0x%llx",
+        (unsigned long long)v18]);
+
+    uintptr_t v20 = *(uintptr_t *)(t + 0x20);
+    LilyMCPWrite([NSString stringWithFormat:
+        @"MCP-ROMO #71 TOOL +20 callback=0x%llx",
+        (unsigned long long)v20]);
+
+    uint8_t v28 = *(uint8_t *)(t + 0x28);
+    LilyMCPWrite([NSString stringWithFormat:
+        @"MCP-ROMO #71 TOOL +28 userOnly=%u", (unsigned)v28]);
+
+    LilyMCPWrite(@"MCP-ROMO #71 CALL ADDTOOL BEGIN");
     ((LilyMcpAddToolFn)target)(server, (__bridge void *)tool);
+    LilyMCPWrite(@"MCP-ROMO #71 CALL ADDTOOL RETURNED");
 
     LilyMCPWrite([NSString stringWithFormat:
-        @"MCP-ROMO #70 ADDTOOL NATIVE RETURN server=%p tool=%p",
+        @"MCP-ROMO #71 ADDTOOL NATIVE RETURN server=%p tool=%p",
         server, tool]);
 }
 
@@ -475,7 +510,7 @@ static BOOL LilyProtectCodePage(void *address, BOOL writable) {
                                   FALSE, prot);
     if (kr != KERN_SUCCESS) {
         LilyMCPWrite([NSString stringWithFormat:
-            @"MCP-ROMO #70 PATCH: vm_protect failed kr=%d", kr]);
+            @"MCP-ROMO #71 PATCH: vm_protect failed kr=%d", kr]);
         return NO;
     }
     return YES;
@@ -498,7 +533,7 @@ static BOOL LilyWriteBranch(void *address, uintptr_t destination) {
 
     if ((delta & 0x3) != 0 || delta < -(128LL * 1024 * 1024) ||
         delta >= (128LL * 1024 * 1024)) {
-        LilyMCPWrite(@"MCP-ROMO #70 PATCH: hook outside AArch64 B range");
+        LilyMCPWrite(@"MCP-ROMO #71 PATCH: hook outside AArch64 B range");
         return NO;
     }
 
@@ -520,7 +555,7 @@ static BOOL LilyAllocateRegisterToolsTrampoline(uintptr_t target) {
                                    VM_FLAGS_ANYWHERE);
     if (kr != KERN_SUCCESS) {
         LilyMCPWrite([NSString stringWithFormat:
-            @"MCP-ROMO #70 PATCH: vm_allocate trampoline failed kr=%d", kr]);
+            @"MCP-ROMO #71 PATCH: vm_allocate trampoline failed kr=%d", kr]);
         return NO;
     }
 
@@ -529,7 +564,7 @@ static BOOL LilyAllocateRegisterToolsTrampoline(uintptr_t target) {
     if (kr != KERN_SUCCESS) {
         vm_deallocate(mach_task_self(), page, vm_page_size);
         LilyMCPWrite([NSString stringWithFormat:
-            @"MCP-ROMO #70 PATCH: trampoline RW protect failed kr=%d", kr]);
+            @"MCP-ROMO #71 PATCH: trampoline RW protect failed kr=%d", kr]);
         return NO;
     }
 
@@ -549,13 +584,13 @@ static BOOL LilyAllocateRegisterToolsTrampoline(uintptr_t target) {
     if (kr != KERN_SUCCESS) {
         vm_deallocate(mach_task_self(), page, vm_page_size);
         LilyMCPWrite([NSString stringWithFormat:
-            @"MCP-ROMO #70 PATCH: trampoline RX protect failed kr=%d", kr]);
+            @"MCP-ROMO #71 PATCH: trampoline RX protect failed kr=%d", kr]);
         return NO;
     }
 
     gLilyNativeRegisterToolsTrampoline = (uintptr_t)page;
     LilyMCPWrite([NSString stringWithFormat:
-        @"MCP-ROMO #70 PATCH: registerTools trampoline=%p continue=0x%llx",
+        @"MCP-ROMO #71 PATCH: registerTools trampoline=%p continue=0x%llx",
         (void *)page,
         (unsigned long long)(target + sizeof(gLilyOriginalRegisterToolsBytes))]);
     return YES;
@@ -573,7 +608,7 @@ static BOOL LilyPatchNativeRegisterTools(void) {
 
     uintptr_t slide = LilyFindSharedImageSlide();
     if (!slide) {
-        LilyMCPWrite(@"MCP-ROMO #70 PATCH: Shared.framework slide NOT FOUND");
+        LilyMCPWrite(@"MCP-ROMO #71 PATCH: Shared.framework slide NOT FOUND");
         pthread_mutex_unlock(&gLilyNativeHookLock);
         return NO;
     }
@@ -593,7 +628,7 @@ static BOOL LilyPatchNativeRegisterTools(void) {
 
     if (memcmp(gLilyOriginalRegisterToolsBytes, expected, 16) != 0) {
         LilyMCPWrite([NSString stringWithFormat:
-            @"MCP-ROMO #70 PATCH: registerTools prologue mismatch @ 0x%llx",
+            @"MCP-ROMO #71 PATCH: registerTools prologue mismatch @ 0x%llx",
             (unsigned long long)registerTarget]);
         pthread_mutex_unlock(&gLilyNativeHookLock);
         return NO;
@@ -667,7 +702,7 @@ static void LilyNativeRegisterToolsHook(void *server) {
 static void LilyInstallMCPRomoHook(void) {
     gLilyMCPHookInstalled = LilyPatchNativeRegisterTools();
     LilyMCPWrite(gLilyMCPHookInstalled
-        ? @"MCP-ROMO PATCH: ENABLED FOR BUILD #52 (native registerTools post-return)"
+        ? @"MCP-ROMO PATCH: ENABLED FOR BUILD #71 (native registerTools post-return)"
         : @"MCP-ROMO PATCH: FAILED FOR BUILD #50");
 }
 
