@@ -700,27 +700,35 @@ static void LilyNativeRegisterToolsHook(void *server) {
             tool ? @"CREATED" : @"FAILED"]);
 
         if (tool) {
-            LilyMCPWrite(@"MCP-ROMO #57: CREATE SUCCEEDED; NOW CALL addToolTool:");
+            LilyMCPWrite(@"MCP-ROMO #58: CREATE SUCCEEDED; PROBE addToolTool: ONLY");
 
-            id serverObj = (__bridge id)server;
-            SEL addToolSel = NSSelectorFromString(@"addToolTool:");
+        /*
+         * BUILD #58:
+         * Do NOT call addToolTool:.
+         * First determine whether the bridged server object can safely
+         * answer respondsToSelector: for the addToolTool: selector.
+         */
+        id serverObj = (__bridge id)server;
+        SEL addToolSel = NSSelectorFromString(@"addToolTool:");
 
-            if (![serverObj respondsToSelector:addToolSel]) {
-                LilyMCPWrite(@"MCP-ROMO #57: addToolTool: SELECTOR NOT FOUND");
-            } else {
-                typedef void (*AddToolObjCFn)(id, SEL, id);
-                AddToolObjCFn addToolFn = (AddToolObjCFn)objc_msgSend;
+        LilyMCPWrite([NSString stringWithFormat:
+            @"MCP-ROMO #58 PROBE BEFORE respondsToSelector server=%p tool=%p selector=%p",
+            server,
+            tool,
+            addToolSel]);
 
-                LilyMCPWrite([NSString stringWithFormat:
-                    @"MCP-ROMO #57 ADDTOOL ENTER server=%p tool=%p",
-                    server,
-                    tool]);
+        BOOL hasAddTool = [serverObj respondsToSelector:addToolSel];
 
-                addToolFn(serverObj, addToolSel, tool);
+        LilyMCPWrite([NSString stringWithFormat:
+            @"MCP-ROMO #58 PROBE RESULT respondsToSelector=%@",
+            hasAddTool ? @"YES" : @"NO"]);
 
-                LilyMCPWrite(@"MCP-ROMO #57 ADDTOOL RETURN");
-            }
-        } else {
+        /*
+         * Intentionally stop here.
+         * addToolTool: is NOT invoked in Build #58.
+         */
+        LilyMCPWrite(@"MCP-ROMO #58 PROBE COMPLETE; addToolTool: NOT CALLED");
+ else {
             LilyMCPWrite(@"MCP-ROMO #57 CREATE FAILED; addTool NOT CALLED");
         }
     } else {
@@ -731,7 +739,7 @@ static void LilyNativeRegisterToolsHook(void *server) {
 static void LilyInstallMCPRomoHook(void) {
     gLilyMCPHookInstalled = LilyPatchNativeRegisterTools();
     LilyMCPWrite(gLilyMCPHookInstalled
-        ? @"MCP-ROMO #57 PATCH: ENABLED — REGISTER + CREATE + addToolTool:"
+        ? @"MCP-ROMO #58 PATCH: ENABLED — REGISTER + CREATE + respondsToSelector PROBE ONLY:"
         : @"MCP-ROMO #57 PATCH: FAILED");
 }
 
