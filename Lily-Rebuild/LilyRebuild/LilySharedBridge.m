@@ -675,16 +675,20 @@ static void LilyNativeRegisterToolsHook(void *server) {
      *   #55 proved the registerTools hook itself survives.
      *   #56 isolates SharedMcpTool construction/callback creation.
      */
+    /*
+     * BUILD #56c:
+     * CREATE ONLY. Run synchronously after the real native registerTools
+     * returns. Use NSLog as the primary observable output so this test does
+     * not depend on the Frida console.
+     *
+     * IMPORTANT:
+     *   - create exactly ONE SharedMcpTool: robot.forward
+     *   - callback only returns a string; it does NOT move Romo
+     *   - DO NOT call McpServer.addTool
+     */
     if (server) {
-        /*
-         * BUILD #56b:
-         * Run CREATE-ONLY synchronously immediately after the native
-         * registerTools call has returned. No dispatch_async, no addTool,
-         * no server bridge/capture.
-         */
-        LilyMCPWrite([NSString stringWithFormat:
-            @"MCP-ROMO #56b CREATE START: server=%p",
-            server]);
+        NSLog(@"[MCP-ROMO #56c] CREATE START server=%p", server);
+        LilyMCPWrite(@"[MCP-ROMO #56c] CREATE START");
 
         id tool = LilyCreateSimpleRomoTool(
             @"robot.forward",
@@ -694,14 +698,17 @@ static void LilyNativeRegisterToolsHook(void *server) {
                 return @"Romo moved forward";
             });
 
+        NSLog(@"[MCP-ROMO #56c] CREATE RESULT tool=%p %@", tool,
+              tool ? @"CREATED" : @"FAILED");
         LilyMCPWrite([NSString stringWithFormat:
-            @"MCP-ROMO #56b CREATE RESULT: tool=%p %@",
-            tool,
-            tool ? @"CREATED" : @"FAILED"]);
+            @"[MCP-ROMO #56c] CREATE RESULT tool=%p %@",
+            tool, tool ? @"CREATED" : @"FAILED"]);
 
-        if (tool) {
-            LilyMCPWrite(@"MCP-ROMO #56b: CREATE SUCCEEDED; addTool NOT CALLED");
-        }
+        NSLog(@"[MCP-ROMO #56c] ADDTOOL NOT CALLED");
+        LilyMCPWrite(@"[MCP-ROMO #56c] ADDTOOL NOT CALLED");
+    } else {
+        NSLog(@"[MCP-ROMO #56c] CREATE START missing server");
+        LilyMCPWrite(@"[MCP-ROMO #56c] CREATE START missing server");
     } else {
         LilyMCPWrite(@"MCP-ROMO #56b CREATE START: missing server");
     }
