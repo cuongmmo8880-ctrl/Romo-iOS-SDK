@@ -666,14 +666,46 @@ static void LilyNativeRegisterToolsHook(void *server) {
         @"MCP-ROMO #52 REGISTER RETURN server=%p", server]);
 
     /*
-     * BUILD #55 TEST:
-     * HOOK ONLY. Do NOT capture the server for later use, do NOT create
-     * SharedMcpTool objects, and do NOT call McpServer.addTool.
+     * BUILD #56 TEST:
+     * CREATE ONLY. Capture the raw McpServer pointer from registerTools,
+     * create exactly ONE SharedMcpTool (robot.forward), and DO NOT call
+     * McpServer.addTool.
      *
-     * Purpose: isolate the native registerTools patch itself from the
-     * Romo MCP tool creation/addTool path.
+     * Purpose:
+     *   #55 proved the registerTools hook itself survives.
+     *   #56 isolates SharedMcpTool construction/callback creation.
      */
-    LilyMCPWrite(@"MCP-ROMO #55 HOOK-ONLY: injection DISABLED; no tool creation; no addTool");
+    if (server) {
+        uintptr_t rawServer = (uintptr_t)server;
+
+        LilyMCPWrite([NSString stringWithFormat:
+            @"MCP-ROMO #56 CREATE-ONLY: server=%p",
+            (void *)rawServer]);
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            /*
+             * Do not bridge the Kotlin/Native server to Objective-C.
+             * It is intentionally unused here; only the tool constructor
+             * is being tested.
+             */
+            (void)rawServer;
+
+            id tool = LilyCreateSimpleRomoTool(
+                @"robot.forward",
+                @"Move the physical Romo robot connected to Lily forward.",
+                ^id(id args) {
+                    (void)args;
+                    return @"Romo moved forward";
+                });
+
+            LilyMCPWrite([NSString stringWithFormat:
+                @"MCP-ROMO #56 CREATE-ONLY RESULT: tool=%p %@",
+                tool,
+                tool ? @"CREATED" : @"FAILED"]);
+        });
+    } else {
+        LilyMCPWrite(@"MCP-ROMO #56 CREATE-ONLY: missing server");
+    }
 }
 
 static void LilyInstallMCPRomoHook(void) {
