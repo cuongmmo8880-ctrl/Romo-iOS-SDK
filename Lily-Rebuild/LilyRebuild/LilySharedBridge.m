@@ -666,7 +666,7 @@ static void LilyNativeRegisterToolsHook(void *server) {
         @"MCP-ROMO #52 REGISTER RETURN server=%p", server]);
 
     /*
-     * BUILD #56 TEST:
+     * BUILD #56b TEST:
      * CREATE ONLY. Capture the raw McpServer pointer from registerTools,
      * create exactly ONE SharedMcpTool (robot.forward), and DO NOT call
      * McpServer.addTool.
@@ -676,35 +676,34 @@ static void LilyNativeRegisterToolsHook(void *server) {
      *   #56 isolates SharedMcpTool construction/callback creation.
      */
     if (server) {
-        uintptr_t rawServer = (uintptr_t)server;
+        /*
+         * BUILD #56b:
+         * Run CREATE-ONLY synchronously immediately after the native
+         * registerTools call has returned. No dispatch_async, no addTool,
+         * no server bridge/capture.
+         */
+        LilyMCPWrite([NSString stringWithFormat:
+            @"MCP-ROMO #56b CREATE START: server=%p",
+            server]);
+
+        id tool = LilyCreateSimpleRomoTool(
+            @"robot.forward",
+            @"Move the physical Romo robot connected to Lily forward.",
+            ^id(id args) {
+                (void)args;
+                return @"Romo moved forward";
+            });
 
         LilyMCPWrite([NSString stringWithFormat:
-            @"MCP-ROMO #56 CREATE-ONLY: server=%p",
-            (void *)rawServer]);
+            @"MCP-ROMO #56b CREATE RESULT: tool=%p %@",
+            tool,
+            tool ? @"CREATED" : @"FAILED"]);
 
-        dispatch_async(dispatch_get_main_queue(), ^{
-            /*
-             * Do not bridge the Kotlin/Native server to Objective-C.
-             * It is intentionally unused here; only the tool constructor
-             * is being tested.
-             */
-            (void)rawServer;
-
-            id tool = LilyCreateSimpleRomoTool(
-                @"robot.forward",
-                @"Move the physical Romo robot connected to Lily forward.",
-                ^id(id args) {
-                    (void)args;
-                    return @"Romo moved forward";
-                });
-
-            LilyMCPWrite([NSString stringWithFormat:
-                @"MCP-ROMO #56 CREATE-ONLY RESULT: tool=%p %@",
-                tool,
-                tool ? @"CREATED" : @"FAILED"]);
-        });
+        if (tool) {
+            LilyMCPWrite(@"MCP-ROMO #56b: CREATE SUCCEEDED; addTool NOT CALLED");
+        }
     } else {
-        LilyMCPWrite(@"MCP-ROMO #56 CREATE-ONLY: missing server");
+        LilyMCPWrite(@"MCP-ROMO #56b CREATE START: missing server");
     }
 }
 
